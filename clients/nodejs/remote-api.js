@@ -25,7 +25,7 @@ class RemoteAPI {
         // handle websocket connection
         this._getSnapShot().then(snapshot => this._send(ws, RemoteAPI.SNAPSHOT, snapshot));
 
-        ws.on('message', data => this._onMessage(data));
+        ws.on('message', message => this._onMessage(ws, message));
 
         console.log('Remote API established connection.');
     }
@@ -40,8 +40,10 @@ class RemoteAPI {
         }
     }
 
-    _onMessage(data) {
-        console.log(data);
+    _onMessage(ws, message) {
+        if (message === RemoteAPI.SNAPSHOT) {
+            this._getSnapShot().then(snapshot => this._send(ws, RemoteAPI.SNAPSHOT, snapshot));
+        }
     }
 
     async _getSnapShot() {
