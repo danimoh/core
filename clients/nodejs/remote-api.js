@@ -7,13 +7,14 @@ class RemoteAPI {
 
     constructor($, port, sslKey, sslCert) {
         this.$ = $;
+        console.log('Setting up Remote API.');
         const sslOptions = {
             key: fs.readFileSync(sslKey),
             cert: fs.readFileSync(sslCert)
         };
         const httpsServer = https.createServer(sslOptions, (req, res) => {
             res.writeHead(200);
-            res.end('Nimiq NodeJS Client\n');
+            res.end('Nimiq NodeJS Remote API\n');
         }).listen(port);
         // websocket server
         this._wss = new WebSocket.Server({server: httpsServer});
