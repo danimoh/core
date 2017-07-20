@@ -1,5 +1,6 @@
 const WebSocket = require('ws');
 const https = require('https');
+const fs = require('fs');
 
 class RemoteAPI {
     static get SNAPSHOT() { return 'snapshot'; }
