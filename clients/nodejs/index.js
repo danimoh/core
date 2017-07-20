@@ -3,7 +3,7 @@ const RemoteApi = require('./remote-api.js');
 const argv = require('minimist')(process.argv.slice(2));
 
 if (!argv.host || !argv.port || !argv.key || !argv.cert) {
-    console.log('Usage: node index.js --host=<hostname> --port=<port> --key=<ssl-key> --cert=<ssl-cert> [--wallet-seed=<wallet-seed>] [--miner] [--passive] [--log=LEVEL] [--log-tag=TAG[:LEVEL]]');
+    console.log('Usage: node index.js --host=<hostname> --port=<port> --key=<ssl-key> --cert=<ssl-cert> [--wallet-seed=<wallet-seed>] [--miner] [--passive] [--remote=<port>] [--log=LEVEL] [--log-tag=TAG[:LEVEL]]');
     process.exit();
 }
 
@@ -15,7 +15,7 @@ const passive = argv.passive;
 const key = argv.key;
 const cert = argv.cert;
 const walletSeed = argv['wallet-seed'] || null;
-const remoteApiPort = argv.remoteApi;
+const remotePort = argv.remote;
 
 if (argv['log']) {
     Nimiq.Log.instance.level = argv['log'] === true ? Log.VERBOSE : argv['log'];
@@ -74,8 +74,8 @@ try {
 
         $.accounts.on($.wallet.address, (account) => _balanceChanged(account._balance));
 
-        if (enableRemoteApi) {
-            new RemoteApi($, 7777, key, cert);
+        if (remotePort) {
+            new RemoteApi($, remotePort, key, cert);
         }
 
     });
