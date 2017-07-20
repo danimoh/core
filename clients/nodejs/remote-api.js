@@ -21,22 +21,34 @@ class RemoteAPI {
         }).listen(port);
         // websocket server
         this._wss = new WebSocket.Server({server: httpsServer});
-        this._wss.on('connection', ws => this._onConnection(ws)); // TODO authentication
+        this._wss.on('connection', (ws, message) => this._onConnection(ws, message)); // TODO authentication
         console.log('Remote API listening on port', port);
 
-        // observers:
+        // listeners:
+        this._listeners = {};
         $.accounts.on($.wallet.address, account => this._onBalanceChanged(account.balance));
         $.blockchain.on('head-changed', async head => this._broadcast(RemoteAPI.BLOCKCHAIN_HEAD, await this._getBlockInfo(head)));
         $.network.on('peers-changed', () => this._broadcast(RemoteAPI.NETWORK, this._getNetworkInfo()));
     }
 
-    _onConnection(ws) {
+    _onConnection(ws, message) {
         // handle websocket connection
         this._getSnapShot().then(snapshot => this._send(ws, RemoteAPI.SNAPSHOT, snapshot));
 
         ws.on('message', message => this._onMessage(ws, message));
 
-        console.log('Remote API established connection.');
+        console.log('Remote API established connection.', message);
+    }
+
+    _addListener(type, ws) {
+        if (!this._listeners[type]) {
+            this._listeners[type] = new Set();
+        }
+        this._listeners[type].add(ws);
+    }
+
+    _removeListener(type, ws) {
+        this._listeners[type].delete(ws);
     }
 
     _send(ws, type, data) {
@@ -50,15 +62,16 @@ class RemoteAPI {
     }
 
     _broadcast(type, data) {
+        if (!this._listeners[type]) return;
         let message = JSON.stringify({
             type: type,
             data: data
         });
-        this._wss.clients.forEach(ws => {
+        for (let ws of this._listeners[type]) {
             if (ws.readyState === WebSocket.OPEN) {
                 ws.send(message);
             }
-        });
+        }
     }
 
     _onMessage(ws, message) {
@@ -74,6 +87,10 @@ class RemoteAPI {
             value: balance.value,
             nonce: balance.nonce
         });
+    }
+
+    _onHeadChanged(head) {
+
     }
 
     async _getSnapShot() {
