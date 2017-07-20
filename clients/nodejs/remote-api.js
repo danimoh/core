@@ -25,6 +25,8 @@ class RemoteAPI {
         this._getSnapShot().then(snapshot => this._send(ws, RemoteAPI.SNAPSHOT, this._getSnapShot()));
 
         ws.on('message', data => this._onMessage(data));
+
+        console.log('Remote API established connection.');
     }
 
     _send(ws, type, data) {
