@@ -23,7 +23,7 @@ class RemoteAPI {
 
     _onConnection(ws) {
         // handle websocket connection
-        this._getSnapShot().then(snapshot => this._send(ws, RemoteAPI.SNAPSHOT, this._getSnapShot()));
+        this._getSnapShot().then(snapshot => this._send(ws, RemoteAPI.SNAPSHOT, snapshot));
 
         ws.on('message', data => this._onMessage(data));
 
