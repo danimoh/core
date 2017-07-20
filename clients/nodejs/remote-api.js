@@ -1,13 +1,16 @@
-const WebSocket = require('ws');
+const WebSocket = require('ws'); // https://github.com/websockets/ws
 const https = require('https');
 const fs = require('fs');
 
 class RemoteAPI {
     static get SNAPSHOT() { return 'snapshot'; }
+    static get BALANCE() { return 'balance'; }
+    static get BLOCKCHAIN_HEAD() { return 'blockchain-head'; }
+    static get NETWORK() { return 'network'; }
+    static get ERROR() { return 'error'; }
 
     constructor($, port, sslKey, sslCert) {
         this.$ = $;
-        console.log('Setting up Remote API.');
         const sslOptions = {
             key: fs.readFileSync(sslKey),
             cert: fs.readFileSync(sslCert)
@@ -18,7 +21,13 @@ class RemoteAPI {
         }).listen(port);
         // websocket server
         this._wss = new WebSocket.Server({server: httpsServer});
-        this._wss.on('connection', ws => this._onConnection(ws));
+        this._wss.on('connection', ws => this._onConnection(ws)); // TODO authentication
+        console.log('Remote API listening on port', port);
+
+        // observers:
+        $.accounts.on($.wallet.address, account => this._onBalanceChanged(account.balance));
+        $.blockchain.on('head-changed', async head => this._broadcast(RemoteAPI.BLOCKCHAIN_HEAD, await this._getBlockInfo(head)));
+        $.network.on('peers-changed', () => this._broadcast(RemoteAPI.NETWORK, this._getNetworkInfo()));
     }
 
     _onConnection(ws) {
@@ -40,10 +49,31 @@ class RemoteAPI {
         }
     }
 
+    _broadcast(type, data) {
+        let message = JSON.stringify({
+            type: type,
+            data: data
+        });
+        this._wss.clients.forEach(ws => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(message);
+            }
+        });
+    }
+
     _onMessage(ws, message) {
         if (message === RemoteAPI.SNAPSHOT) {
             this._getSnapShot().then(snapshot => this._send(ws, RemoteAPI.SNAPSHOT, snapshot));
+        } else {
+            this._send(ws, RemoteAPI.ERROR, 'Unsupported command: '+message);
         }
+    }
+
+    _onBalanceChanged(balance) {
+        this._broadcast(RemoteAPI.BALANCE, {
+            value: balance.value,
+            nonce: balance.nonce
+        });
     }
 
     async _getSnapShot() {
@@ -76,14 +106,7 @@ class RemoteAPI {
                     hashrate: this.$.miner.hashrate,
                     working: this.$.miner.working
                 },
-                network: {
-                    bytesReceived: this.$.network.bytesReceived,
-                    bytesSent: this.$.network.bytesSent,
-                    peerCount: this.$.network.peerCount,
-                    peerCountDumb: this.$.network.peerCountDumb,
-                    peerCountWebRtc: this.$.network.peerCountWebRtc,
-                    peerCountWebSocket: this.$.network.peerCountWebSocket
-                },
+                network: this._getNetworkInfo(),
                 wallet: {
                     address: this.$.wallet.address.toHex(),
                     publicKey: this.$.wallet.publicKey.toBase64(),
@@ -116,6 +139,17 @@ class RemoteAPI {
             },
             serializedSize: block.serializedSize
         }
+    }
+
+    _getNetworkInfo() {
+        return {
+            bytesReceived: this.$.network.bytesReceived,
+            bytesSent: this.$.network.bytesSent,
+            peerCount: this.$.network.peerCount,
+            peerCountDumb: this.$.network.peerCountDumb,
+            peerCountWebRtc: this.$.network.peerCountWebRtc,
+            peerCountWebSocket: this.$.network.peerCountWebSocket
+        };
     }
 
     _getTransactionInfo(transaction) {
