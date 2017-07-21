@@ -59,7 +59,6 @@ class RemoteAPI {
     }
 
     _onMessage(ws, message) {
-        console.log('received message', message);
         try {
             message = JSON.parse(message);
         } catch(e) {
@@ -73,7 +72,7 @@ class RemoteAPI {
         } else if (message.command === RemoteAPI.COMMANDS.GET_STATE) {
             this._sendState(ws, message.type);
         } else {
-            this._sendError(ws, command, 'Unsupported command.');
+            this._sendError(ws, message.command, 'Unsupported command.');
         }
     }
 
