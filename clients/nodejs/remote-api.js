@@ -7,21 +7,33 @@ class RemoteAPI {
         return {
             GET_SNAPSHOT: 'get-snapshot',
             GET_STATE: 'get-state',
-            REGISTER_LISTENERS: 'register-listeners'
-        }
+            REGISTER_LISTENER: 'register-listener',
+            UNREGISTER_LISTENER: 'unregister-listener'
+        };
     }
     static get MESSAGE_TYPES() {
         return {
             SNAPSHOT: 'snapshot',
             BALANCE_STATE: 'balance',
+            BALANCE_CHANGED: 'balance-changed',
             CONSENSUS_STATE: 'consensus',
-            BLOCKCHAIN_HEAD_STATE: 'blockchain-head',
+            CONSENSUS_ESTABLISHED: 'consensus-established',
+            CONSENSUS_LOST: 'consensus-lost',
+            CONSENSUS_SYNCING: 'consensus-syncing',
             BLOCKCHAIN_STATE: 'blockchain',
+            BLOCKCHAIN_HEAD_CHANGED: 'blockchain-head-changed',
             NETWORK_STATE: 'network',
+            NETWORK_PEERS_CHANGED: 'network-peers-changed',
             MEMPOOL_STATE: 'mempool',
+            MEMPOOL_TRANSACTION_ADDED: 'mempool-transaction-added',
+            MEMPOOL_TRANSACTIONS_READY: 'mempool-transactions-ready',
             MINER_STATE: 'miner',
+            MINER_STARTED: 'miner-started',
+            MINER_STOPPED: 'miner-stopped',
+            MINER_HASHRATE_CHANGED: 'miner-hashrate-changed',
+            MINER_BLOCK_MINED: 'miner-block-mined',
             ERROR: 'error'
-        }
+        };
     }
 
     constructor($, port, sslKey, sslCert) {
@@ -41,12 +53,18 @@ class RemoteAPI {
 
         // listeners:
         this._listeners = {};
-        $.accounts.on($.wallet.address, account => this._broadcast(RemoteAPI.MESSAGE_TYPES.BALANCE_STATE, this._getBalanceInfo(account.balance)));
-        $.blockchain.on('head-changed', async head => this._broadcast(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_STATE, await this._getBlockInfo(head)));
-        $.network.on('peers-changed', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_STATE, this._getNetworkState()));
-        $.mempool.on('*', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_STATE, this._getMempoolState()));
-        $.miner.on('*', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_STATE, this._getMinerState()));
-        $.consensus.on('*', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.CONSENSUS_STATE, this._getConsensusState()))
+        $.accounts.on($.wallet.address, account => this._broadcast(RemoteAPI.MESSAGE_TYPES.BALANCE_CHANGED, this._getBalanceInfo(account.balance)));
+        $.blockchain.on('head-changed', async head => this._broadcast(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED, await this._getBlockInfo(head)));
+        $.network.on('peers-changed', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, this._getNetworkState()));
+        $.mempool.on('transactions-ready', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY));
+        $.mempool.on('transaction-added', transaction => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, this._getTransactionInfo(transaction)));
+        $.miner.on('start', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_STARTED));
+        $.miner.on('stop', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_STOPPED));
+        $.miner.on('hashrate-changed', hasrate => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED, hashrate));
+        $.miner.on('block-mined', block => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED, this._getBlockInfo(block)));
+        $.consensus.on('established', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.CONSENSUS_ESTABLISHED));
+        $.consensus.on('lost', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.CONSENSUS_LOST));
+        $.consensus.on('syncing', targetHeight => this._broadcast(RemoteAPI.MESSAGE_TYPES.CONSENSUS_SYNCING, targetHeight));
     }
 
     _onConnection(ws) {
@@ -65,8 +83,10 @@ class RemoteAPI {
             this._sendError(ws, message, 'Couldn\'t parse command');
             return;
         }
-        if (message.command === RemoteAPI.COMMANDS.REGISTER_LISTENERS) {
-            this._registerListeners(ws, message.types);
+        if (message.command === RemoteAPI.COMMANDS.REGISTER_LISTENER) {
+            this._registerListener(ws, message.type);
+        } else if (message.command === RemoteAPI.COMMANDS.UNREGISTER_LISTENER) {
+            this._unregisterListener(ws, message.type);
         } else if (message.command === RemoteAPI.COMMANDS.GET_SNAPSHOT) {
             this._getSnapShot().then(snapshot => this._send(ws, RemoteAPI.MESSAGE_TYPES.SNAPSHOT, snapshot));
         } else if (message.command === RemoteAPI.COMMANDS.GET_STATE) {
@@ -76,12 +96,18 @@ class RemoteAPI {
         }
     }
 
+    _isValidListenerType(type) {
+        const VALID_LISTENER_TYPES = [RemoteAPI.MESSAGE_TYPES.BALANCE_CHANGED, RemoteAPI.MESSAGE_TYPES.CONSENSUS_ESTABLISHED,
+            RemoteAPI.MESSAGE_TYPES.CONSENSUS_LOST, RemoteAPI.MESSAGE_TYPES.CONSENSUS_SYNCING, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED,
+            RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY,
+            RemoteAPI.MESSAGE_TYPES.MINER_STARTED, RemoteAPI.MESSAGE_TYPES.MINER_STOPPED, RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED,
+            RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED];
+        return VALID_LISTENER_TYPES.indexOf(type) !== -1;
+    }
+
     _registerListener(ws, type) {
-        const VALID_LISTENER_TYPES = [RemoteAPI.MESSAGE_TYPES.BALANCE_STATE, RemoteAPI.MESSAGE_TYPES.CONSENSUS_STATE,
-            RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_STATE, RemoteAPI.MESSAGE_TYPES.NETWORK_STATE, RemoteAPI.MESSAGE_TYPES.MEMPOOL_STATE,
-            RemoteAPI.MESSAGE_TYPES.MINER_STATE];
-        if (VALID_LISTENER_TYPES.indexOf(type) === -1) {
-            this._sendError(ws, RemoteAPI.COMMANDS.REGISTER_LISTENERS, type + ' is not a valid type.');
+        if (!this._isValidListenerType(type)) {
+            this._sendError(ws, RemoteAPI.COMMANDS.REGISTER_LISTENER, type + ' is not a valid type.');
             return;
         }
         if (!this._listeners[type]) {
@@ -91,17 +117,12 @@ class RemoteAPI {
     }
 
     _unregisterListener(ws, type) {
-        this._listeners[type].delete(ws);
-    }
-
-    _registerListeners(ws, types) {
-        this._unregisterListeners(ws);
-        if (!types || !Array.isArray(types)) {
-            this._sendError(ws, RemoteAPI.COMMANDS.REGISTER_LISTENERS, 'Illegal listeners list');
+        if (!this._isValidListenerType(type)) {
+            this._sendError(ws, RemoteAPI.COMMANDS.UNREGISTER_LISTENER, type + ' is not a valid type.');
             return;
         }
-        for (const type of types) {
-            this._registerListener(ws, type);
+        if (type in this._listeners) {
+            this._listeners[type].delete(ws);
         }
     }
 
@@ -113,20 +134,26 @@ class RemoteAPI {
 
     _send(ws, type, data) {
         if (ws.readyState === WebSocket.OPEN) {
-            // if the connection is (still) open, send the snapshot
-            ws.send(JSON.stringify({
-                type: type,
-                data: data
-            }));
+            // if the connection is (still) open, send the message
+            let message = {
+                type: type
+            };
+            if (data !== undefined) {
+                message.data = data;
+            }
+            ws.send(JSON.stringify(message));
         }
     }
 
     _broadcast(type, data) {
         if (!this._listeners[type]) return;
-        let message = JSON.stringify({
-            type: type,
-            data: data
-        });
+        let message = {
+            type: type
+        };
+        if (data !== undefined) {
+            message.data = data;
+        }
+        message = JSON.stringify(message);
         for (let ws of this._listeners[type]) {
             if (ws.readyState === WebSocket.OPEN) {
                 ws.send(message);
@@ -245,20 +272,22 @@ class RemoteAPI {
         };
     }
 
+    _getTransactionInfo(transaction) {
+        return {
+            fee: transaction.fee,
+            nonce: transaction.nonce,
+            recipientAddr: transaction.recipientAddr.toHex(),
+            senderPubKey: transaction.senderPubKey.toBase64(),
+            serializedContentSize: transaction.serializedContentSize,
+            serializedSize: transaction.serializedSize,
+            signature: transaction.signature.toBase64(),
+            value: transaction.value
+        };
+    }
+
     _getMempoolState() {
         return {
-            transactions: this.$.mempool.getTransactions().map(transaction => {
-                return {
-                    fee: transaction.fee,
-                    nonce: transaction.nonce,
-                    recipientAddr: transaction.recipientAddr.toHex(),
-                    senderPubKey: transaction.senderPubKey.toBase64(),
-                    serializedContentSize: transaction.serializedContentSize,
-                    serializedSize: transaction.serializedSize,
-                    signature: transaction.signature.toBase64(),
-                    value: transaction.value
-                }
-            })
+            transactions: this.$.mempool.getTransactions().map(this._getTransactionInfo)
         };
     }
 
