@@ -61,7 +61,7 @@ class RemoteAPI {
         $.mempool.on('transaction-added', transaction => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, this._getTransactionInfo(transaction)));
         $.miner.on('start', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_STARTED));
         $.miner.on('stop', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_STOPPED));
-        $.miner.on('hashrate-changed', hasrate => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED, hashrate));
+        $.miner.on('hashrate-changed', hashrate => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED, hashrate));
         $.miner.on('block-mined', block => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED, this._getBlockInfo(block)));
         $.consensus.on('established', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.CONSENSUS_ESTABLISHED));
         $.consensus.on('lost', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.CONSENSUS_LOST));
@@ -73,10 +73,7 @@ class RemoteAPI {
         this._getSnapShot().then(snapshot => this._send(ws, RemoteAPI.MESSAGE_TYPES.SNAPSHOT, snapshot));
 
         ws.on('message', message => this._onMessage(ws, message));
-        ws.on('close', () => {
-            console.log('connection closed');
-            this._unregisterListeners(ws)
-        });
+        ws.on('close', () => this._unregisterListeners(ws));
 
         console.log('Remote API established connection.');
     }
