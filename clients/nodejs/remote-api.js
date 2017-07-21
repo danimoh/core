@@ -73,6 +73,10 @@ class RemoteAPI {
         this._getSnapShot().then(snapshot => this._send(ws, RemoteAPI.MESSAGE_TYPES.SNAPSHOT, snapshot));
 
         ws.on('message', message => this._onMessage(ws, message));
+        ws.on('close', () => {
+            console.log('connection closed');
+            this._unregisterListeners(ws)
+        });
 
         console.log('Remote API established connection.');
     }
@@ -119,10 +123,6 @@ class RemoteAPI {
     }
 
     _unregisterListener(ws, type) {
-        if (!this._isValidListenerType(type)) {
-            this._sendError(ws, RemoteAPI.COMMANDS.UNREGISTER_LISTENER, type + ' is not a valid type.');
-            return;
-        }
         if (type in this._listeners) {
             this._listeners[type].delete(ws);
         }
