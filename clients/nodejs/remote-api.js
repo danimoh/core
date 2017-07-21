@@ -77,9 +77,9 @@ class RemoteAPI {
     }
 
     _registerListener(ws, type) {
-        const VALID_LISTENER_TYPES = [RemoteAPI.BALANCE_STATE, RemoteAPI.CONSENSUS_STATE, RemoteAPI.BLOCKCHAIN_HEAD_STATE, RemoteAPI.NETWORK_STATE,
-            RemoteAPI.MEMPOOL_STATE, RemoteAPI.MINER_STATE];
-        console.log(type, RemoteAPI.MEMPOOL_STATE, RemoteAPI.MEMPOOL_STATE===type, VALID_LISTENER_TYPES.indexOf(type), VALID_LISTENER_TYPES);
+        const VALID_LISTENER_TYPES = [RemoteAPI.MESSAGE_TYPES.BALANCE_STATE, RemoteAPI.MESSAGE_TYPES.CONSENSUS_STATE,
+            RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_STATE, RemoteAPI.MESSAGE_TYPES.NETWORK_STATE, RemoteAPI.MESSAGE_TYPES.MEMPOOL_STATE,
+            RemoteAPI.MESSAGE_TYPES.MINER_STATE];
         if (VALID_LISTENER_TYPES.indexOf(type) === -1) {
             this._sendError(ws, RemoteAPI.COMMANDS.REGISTER_LISTENERS, type + ' is not a valid type.');
             return;
