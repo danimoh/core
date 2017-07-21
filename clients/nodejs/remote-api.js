@@ -32,7 +32,8 @@ class RemoteAPI {
             MINER_STOPPED: 'miner-stopped',
             MINER_HASHRATE_CHANGED: 'miner-hashrate-changed',
             MINER_BLOCK_MINED: 'miner-block-mined',
-            ERROR: 'error'
+            ERROR: 'error',
+            INFO: 'info'
         };
     }
 
@@ -114,6 +115,7 @@ class RemoteAPI {
             this._listeners[type] = new Set();
         }
         this._listeners[type].add(ws);
+        this._send(ws, RemoteAPI.MESSAGE_TYPES.INFO, 'Listener for type '+type+' registered.');
     }
 
     _unregisterListener(ws, type) {
@@ -124,6 +126,7 @@ class RemoteAPI {
         if (type in this._listeners) {
             this._listeners[type].delete(ws);
         }
+        this._send(ws, RemoteAPI.MESSAGE_TYPES.INFO, 'Listener for type '+type+' unregistered.');
     }
 
     _unregisterListeners(ws) {
