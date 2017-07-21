@@ -59,6 +59,7 @@ class RemoteAPI {
     }
 
     _onMessage(ws, message) {
+        console.log('received message', message);
         try {
             message = JSON.parse(message);
         } catch(e) {
