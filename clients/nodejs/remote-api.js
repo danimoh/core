@@ -12,7 +12,7 @@ class RemoteAPI {
     }
     static get MESSAGE_TYPES() {
         return {
-            SNAPSHOT: 'snapshot';
+            SNAPSHOT: 'snapshot',
             BALANCE_STATE: 'balance',
             CONSENSUS_STATE: 'consensus',
             BLOCKCHAIN_HEAD_STATE: 'blockchain-head',
