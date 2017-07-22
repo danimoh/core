@@ -207,7 +207,7 @@ class RemoteAPI {
     _sendBalance(ws, address, command) {
         this.$.accounts.getBalance(address)
             .then(balance => this._send(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, {
-                address: Nimiq.Address.fromHex(address),
+                address: Address.fromHex(address),
                 value: balance.value,
                 nonce: balance.nonce
             }))
