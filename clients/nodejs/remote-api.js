@@ -10,7 +10,8 @@ class RemoteAPI {
             GET_STATE: 'get-state',
             REGISTER_LISTENER: 'register-listener',
             UNREGISTER_LISTENER: 'unregister-listener',
-            ACCOUNTS_GET_BALANCE: 'accounts-get-balance'
+            ACCOUNTS_GET_BALANCE: 'accounts-get-balance',
+            ACCOUNTS_GET_HASH: 'accounts-get-hash'
         };
     }
     static get MESSAGE_TYPES() {
@@ -19,6 +20,7 @@ class RemoteAPI {
             ACCOUNTS_STATE: 'accounts',
             ACCOUNTS_ACCOUNT_CHANGED: 'accounts-account-changed',
             ACCOUNTS_BALANCE: 'accounts-balance',
+            ACCOUNTS_HASH: 'accounts-hash',
             CONSENSUS_STATE: 'consensus',
             CONSENSUS_ESTABLISHED: 'consensus-established',
             CONSENSUS_LOST: 'consensus-lost',
@@ -97,7 +99,7 @@ class RemoteAPI {
         } else if (message.command === RemoteAPI.COMMANDS.GET_STATE) {
             this._sendState(ws, message.type);
         } else if (message.command === RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE) {
-            this._sendBalance(ws, message.address);
+            this._sendAccountsBalance(ws, message.address);
         } else {
             this._sendError(ws, message.command, 'Unsupported command.');
         }
@@ -216,19 +218,25 @@ class RemoteAPI {
         });
     }
 
-    _sendBalance(ws, addressString, command) {
+    _sendAccountsBalance(ws, addressString) {
         const address = this._parseAddress(addressString);
         if (!address) {
             this._sendError(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, 'A valid address in hex format required.');
             return;
         }
         this.$.accounts.getBalance(address)
-            .then(balance => this._send(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, {
+            .then(balance => this._send(ws, RemoteAPI.MESSAGE_TYPES.ACCOUNTS_GET_BALANCE, {
                 address: addressString,
                 value: balance.value,
                 nonce: balance.nonce
             }))
-            .catch(e => this._sendError(ws, command, 'Failed to get balance for '+addressString));
+            .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, 'Failed to get balance for '+addressString));
+    }
+
+    _sendAccountsHash(ws) {
+        this.$.accounts.hash()
+            .then(hash => this._send(ws, RemoteAPI.MESSAGE_TYPES.ACCOUNTS_HASH, hash))
+            .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_HASH, 'Failed to get accounts hash.'));
     }
 
     _sendState(ws, type) {
