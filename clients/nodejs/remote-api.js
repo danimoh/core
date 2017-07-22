@@ -199,7 +199,7 @@ class RemoteAPI {
         this._observedAccounts.add(addressString);
         const messageType = RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED + '-' + addressString;
         this.$.accounts.on(address, account => {
-            console.log('\n\nAccount change: ', addressString, account.balance.value);
+            console.log('\n\nAccount change: ', messageType, addressString, account.balance.value);
             this._broadcast(messageType, {
                 address: addressString,
                 value: account.balance.value,
