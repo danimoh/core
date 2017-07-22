@@ -204,14 +204,19 @@ class RemoteAPI {
         }));
     }
 
-    _sendBalance(ws, address, command) {
+    _sendBalance(ws, addressString, command) {
+        const address = this._parseAddress(addressString);
+        if (!address) {
+            this._sendError(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, 'A valid address in hex format required.');
+            return;
+        }
         this.$.accounts.getBalance(address)
             .then(balance => this._send(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, {
-                address: Address.fromHex(address),
+                address: addressString,
                 value: balance.value,
                 nonce: balance.nonce
             }))
-            .catch(e => this._sendError(ws, command, 'Failed to get balance for '+address));
+            .catch(e => this._sendError(ws, command, 'Failed to get balance for '+addressString));
     }
 
     _sendState(ws, type) {
