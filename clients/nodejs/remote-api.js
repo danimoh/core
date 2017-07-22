@@ -191,18 +191,21 @@ class RemoteAPI {
     }
 
     _setupAccountChangeListener(address) {
-        const addressHex = address.toHex();
-        if (this._observedAccounts.has(addressHex)) {
+        const addressString = address.toHex();
+        if (this._observedAccounts.has(addressString)) {
             // already set up, nothing to do
             return;
         }
-        this._observedAccounts.add(addressHex);
-        const messageType = RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED + '-' + addressHex;
-        this.$.accounts.on(address, account => this._broadcast(messageType, {
-            address: address,
-            value: account.balance.value,
-            nonce: account.balance.nonce
-        }));
+        this._observedAccounts.add(addressString);
+        const messageType = RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED + '-' + addressString;
+        this.$.accounts.on(address, account => {
+            console.log('\n\nAccount change: ', addressString, account.balance.value);
+            this._broadcast(messageType, {
+                address: addressString,
+                value: account.balance.value,
+                nonce: account.balance.nonce
+            });
+        });
     }
 
     _sendBalance(ws, addressString, command) {
