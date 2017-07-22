@@ -185,6 +185,7 @@ class RemoteAPI {
         try {
             return Nimiq.Address.fromHex(addressString);
         } catch(e) {
+            console.log('Catched error', e.message);
             return false;
         }
     }
