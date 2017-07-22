@@ -183,7 +183,7 @@ class RemoteAPI {
 
     _parseAddress(addressString) {
         try {
-            return Address.fromHex(addressString);
+            return Nimiq.Address.fromHex(addressString);
         } catch(e) {
             return false;
         }
