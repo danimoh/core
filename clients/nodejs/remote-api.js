@@ -1,3 +1,4 @@
+const Nimiq = require('../../dist/node.js');
 const WebSocket = require('ws'); // https://github.com/websockets/ws
 const https = require('https');
 const fs = require('fs');
@@ -185,7 +186,6 @@ class RemoteAPI {
         try {
             return Nimiq.Address.fromHex(addressString);
         } catch(e) {
-            console.log('Catched error', e.message);
             return false;
         }
     }
