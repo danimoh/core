@@ -210,8 +210,8 @@ class RemoteAPI {
                 address: address,
                 value: balance.value,
                 nonce: balance.nonce
-            })
-            catch(e => this._sendError(ws, command, 'Failed to get balance for '+address));
+            }))
+            .catch(e => this._sendError(ws, command, 'Failed to get balance for '+address));
     }
 
     _sendState(ws, type) {
