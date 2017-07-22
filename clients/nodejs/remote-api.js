@@ -100,6 +100,8 @@ class RemoteAPI {
             this._sendState(ws, message.type);
         } else if (message.command === RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE) {
             this._sendAccountsBalance(ws, message.address);
+        } else if (message.command === RemoteAPI.COMMANDS.ACCOUNTS_GET_HASH) {
+            this._sendAccountsHash(ws);
         } else {
             this._sendError(ws, message.command, 'Unsupported command.');
         }
