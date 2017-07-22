@@ -120,7 +120,7 @@ class RemoteAPI {
                     + ' requires a valid address in hex format');
                 return;
             }
-            type = type + '-' + message.address;
+            type = type + '-' + message.address.toLowerCase();
             this._setupAccountChangeListener(address);
         }
         if (!this._isValidListenerType(type)) {
@@ -191,7 +191,7 @@ class RemoteAPI {
     }
 
     _setupAccountChangeListener(address) {
-        const addressString = address.toHex();
+        const addressString = address.toHex().toLowerCase();
         if (this._observedAccounts.has(addressString)) {
             // already set up, nothing to do
             return;
@@ -199,7 +199,6 @@ class RemoteAPI {
         this._observedAccounts.add(addressString);
         const messageType = RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED + '-' + addressString;
         this.$.accounts.on(address, account => {
-            console.log('\n\nAccount change: ', messageType, addressString, account.balance.value);
             this._broadcast(messageType, {
                 address: addressString,
                 value: account.balance.value,
