@@ -135,7 +135,16 @@ class RemoteAPI {
     }
 
     _unregisterListener(ws, message) {
-        const type = message.type;
+        let type = message.type;
+        if (type === RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED) {
+            const address = this._parseAddress(message.address);
+            if (!address) {
+                this._sendError(ws, RemoteAPI.COMMANDS.UNREGISTER_LISTENER, 'Type ' + RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED
+                    + ' requires a valid address in hex format');
+                return;
+            }
+            type = type + '-' + message.address.toLowerCase();
+        }
         if (type in this._listeners) {
             this._listeners[type].delete(ws);
         }
