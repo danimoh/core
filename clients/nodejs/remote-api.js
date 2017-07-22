@@ -82,7 +82,7 @@ class RemoteAPI {
 
     _onMessage(ws, message) {
         try {
-            console.log('message');
+            console.log('message', message);
             message = JSON.parse(message);
         } catch(e) {
             this._sendError(ws, message, 'Couldn\'t parse command');
