@@ -8,14 +8,16 @@ class RemoteAPI {
             GET_SNAPSHOT: 'get-snapshot',
             GET_STATE: 'get-state',
             REGISTER_LISTENER: 'register-listener',
-            UNREGISTER_LISTENER: 'unregister-listener'
+            UNREGISTER_LISTENER: 'unregister-listener',
+            ACCOUNTS_GET_BALANCE: 'accounts-get-balance'
         };
     }
     static get MESSAGE_TYPES() {
         return {
             SNAPSHOT: 'snapshot',
-            BALANCE_STATE: 'balance',
-            BALANCE_CHANGED: 'balance-changed',
+            ACCOUNTS_STATE: 'accounts',
+            ACCOUNTS_ACCOUNT_CHANGED: 'accounts-account-changed',
+            ACCOUNTS_BALANCE: 'accounts-balance',
             CONSENSUS_STATE: 'consensus',
             CONSENSUS_ESTABLISHED: 'consensus-established',
             CONSENSUS_LOST: 'consensus-lost',
@@ -54,7 +56,7 @@ class RemoteAPI {
 
         // listeners:
         this._listeners = {};
-        $.accounts.on($.wallet.address, account => this._broadcast(RemoteAPI.MESSAGE_TYPES.BALANCE_CHANGED, this._getBalanceInfo(account.balance)));
+        this._accountChangeListeners = new Set();
         $.blockchain.on('head-changed', async head => this._broadcast(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED, await this._getBlockInfo(head)));
         $.network.on('peers-changed', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, this._getNetworkState()));
         $.mempool.on('transactions-ready', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY));
@@ -86,28 +88,40 @@ class RemoteAPI {
             return;
         }
         if (message.command === RemoteAPI.COMMANDS.REGISTER_LISTENER) {
-            this._registerListener(ws, message.type);
+            this._registerListener(ws, message);
         } else if (message.command === RemoteAPI.COMMANDS.UNREGISTER_LISTENER) {
-            this._unregisterListener(ws, message.type);
+            this._unregisterListener(ws, message);
         } else if (message.command === RemoteAPI.COMMANDS.GET_SNAPSHOT) {
             this._getSnapShot().then(snapshot => this._send(ws, RemoteAPI.MESSAGE_TYPES.SNAPSHOT, snapshot));
         } else if (message.command === RemoteAPI.COMMANDS.GET_STATE) {
             this._sendState(ws, message.type);
+        } else if (message.command === RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE) {
+            this._sendBalance(ws, message.address);
         } else {
             this._sendError(ws, message.command, 'Unsupported command.');
         }
     }
 
     _isValidListenerType(type) {
-        const VALID_LISTENER_TYPES = [RemoteAPI.MESSAGE_TYPES.BALANCE_CHANGED, RemoteAPI.MESSAGE_TYPES.CONSENSUS_ESTABLISHED,
-            RemoteAPI.MESSAGE_TYPES.CONSENSUS_LOST, RemoteAPI.MESSAGE_TYPES.CONSENSUS_SYNCING, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED,
-            RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY,
-            RemoteAPI.MESSAGE_TYPES.MINER_STARTED, RemoteAPI.MESSAGE_TYPES.MINER_STOPPED, RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED,
-            RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED];
-        return VALID_LISTENER_TYPES.indexOf(type) !== -1;
+        const VALID_LISTENER_TYPES = [RemoteAPI.MESSAGE_TYPES.CONSENSUS_ESTABLISHED, RemoteAPI.MESSAGE_TYPES.CONSENSUS_LOST,
+            RemoteAPI.MESSAGE_TYPES.CONSENSUS_SYNCING, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED, RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED,
+            RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY, RemoteAPI.MESSAGE_TYPES.MINER_STARTED,
+            RemoteAPI.MESSAGE_TYPES.MINER_STOPPED, RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED, RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED];
+        return VALID_LISTENER_TYPES.indexOf(type) !== -1 || type.startsWith(RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED);
     }
 
-    _registerListener(ws, type) {
+    _registerListener(ws, message) {
+        let type = message.type;
+        if (type === RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED) {
+            const address = this._parseAddress(message.address);
+            if (!address) {
+                this._sendError(ws, RemoteAPI.COMMANDS.REGISTER_LISTENER, 'Type ' + RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED
+                    + ' requires a valid address in hex format');
+                return;
+            }
+            type = type + '-' + message.address;
+            this._setupAccountChangeListener(address);
+        }
         if (!this._isValidListenerType(type)) {
             this._sendError(ws, RemoteAPI.COMMANDS.REGISTER_LISTENER, type + ' is not a valid type.');
             return;
@@ -119,7 +133,8 @@ class RemoteAPI {
         this._send(ws, RemoteAPI.MESSAGE_TYPES.INFO, 'Listener for type '+type+' registered.');
     }
 
-    _unregisterListener(ws, type) {
+    _unregisterListener(ws, message) {
+        const type = message.type;
         if (type in this._listeners) {
             this._listeners[type].delete(ws);
         }
@@ -166,9 +181,42 @@ class RemoteAPI {
         this._send(ws, RemoteAPI.MESSAGE_TYPES.ERROR, errorMessage);
     }
 
+    _parseAddress(addressString) {
+        try {
+            return Address.fromHex(addressString);
+        } catch(e) {
+            return false;
+        }
+    }
+
+    _setupAccountChangeListener(address) {
+        const addressHex = address.toHex();
+        if (this._observedAccounts.has(addressHex)) {
+            // already set up, nothing to do
+            return;
+        }
+        this._observedAccounts.add(addressHex);
+        const messageType = RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED + '-' + addressHex;
+        this.$.accounts.on(address, account => this._broadcast(messageType, {
+            address: address,
+            value: account.balance.value,
+            nonce: account.balance.nonce
+        }));
+    }
+
+    _sendBalance(ws, address, command) {
+        this.$.accounts.getBalance(address)
+            .then(balance => this._send(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, {
+                address: address,
+                value: balance.value,
+                nonce: balance.nonce
+            })
+            catch(e => this._sendError(ws, command, 'Failed to get balance for '+address));
+    }
+
     _sendState(ws, type) {
-        if (type === RemoteAPI.MESSAGE_TYPES.BALANCE_STATE) {
-            this.$.accounts.getBalance(this.$.wallet.address).then(balance => this._send(ws, type, this._getBalanceInfo(balance)));
+        if (type === RemoteAPI.MESSAGE_TYPES.ACCOUNTS_STATE) {
+            this._getAccountsState().then(accountsState => this._send(ws, type, accountsState));
         } else if (type === RemoteAPI.MESSAGE_TYPES.CONSENSUS_STATE) {
             this._send(ws, type, this._getConsensusState());
         } else if (type === RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_STATE) {
@@ -186,15 +234,12 @@ class RemoteAPI {
 
     async _getSnapShot() {
         return await Promise.all([
-            this.$.accounts.hash(),
-            this.$.accounts.getBalance(this.$.wallet.address),
+            this._getAccountsState(),
             this._getBlockchainState()
         ]).then(promiseResults => {
-            let [accountsHash, balance, blockchainState] = promiseResults;
+            let [accountsState, blockchainState] = promiseResults;
             return {
-                accounts: {
-                    hash: accountsHash.toBase64()
-                },
+                accounts: accountsState,
                 blockchain: blockchainState,
                 consensus: this._getConsensusState(),
                 mempool: this._getMempoolState(),
@@ -202,17 +247,15 @@ class RemoteAPI {
                 network: this._getNetworkState(),
                 wallet: {
                     address: this.$.wallet.address.toHex(),
-                    publicKey: this.$.wallet.publicKey.toBase64(),
-                    balance: this._getBalanceInfo(balance)
+                    publicKey: this.$.wallet.publicKey.toBase64()
                 }
             };
         });
     }
 
-    _getBalanceInfo(balance) {
+    async _getAccountsState() {
         return {
-            value: balance.value,
-            nonce: balance.nonce
+            hash: (await this.$.accounts.hash()).toBase64()
         };
     }
 
@@ -293,6 +336,7 @@ class RemoteAPI {
 
     _getMinerState() {
         return {
+            address: this.$.miner.address.toHex(),
             hashrate: this.$.miner.hashrate,
             working: this.$.miner.working
         };
