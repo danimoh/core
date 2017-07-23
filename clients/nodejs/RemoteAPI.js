@@ -255,6 +255,7 @@ class RemoteAPI {
     }
 
     _sendBlock(ws, hashString) {
+        hashString = hashString.toLowerCase();
         let hash;
         try {
             hash = Nimiq.Hash.fromBase64(hashString);
@@ -263,9 +264,9 @@ class RemoteAPI {
             return;
         }
         this.$.blockchain.getBlock(hash)
-            .then(block => this._getBlockInfo(block))
+            .then(block => { console.log('found block', block);  return this._getBlockInfo(block)})
             .then(blockInfo => this._send(ws, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_BLOCK, blockInfo))
-            .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.BLOCKCHAIN_GET_BLOCK, 'Failed to get block '+hashString));
+            .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.BLOCKCHAIN_GET_BLOCK, 'Failed to get block '+hashString+' - '+e));
     }
 
     _sendNextCompactTarget(ws) {
@@ -351,7 +352,8 @@ class RemoteAPI {
                     hash: bodyHash,
                     minerAddr: minerAddr,
                     serializedSize: block.body.serializedSize,
-                    transactionCount: block.body.transactionCount
+                    transactionCount: block.body.transactionCount,
+                    transactions: block.body.transactions.map(this._getTransactionInfo)
                 },
                 accountsHash: block.accountsHash.toBase64(),
                 hash: blockHash,
