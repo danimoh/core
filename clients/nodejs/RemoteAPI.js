@@ -47,6 +47,7 @@ class RemoteAPI {
             MINER_STOPPED: 'miner-stopped',
             MINER_HASHRATE_CHANGED: 'miner-hashrate-changed',
             MINER_BLOCK_MINED: 'miner-block-mined',
+            WALLET_STATE: 'wallet',
             ERROR: 'error',
             INFO: 'info'
         };
