@@ -263,8 +263,9 @@ class RemoteAPI {
             this._sendError(ws, RemoteAPI.COMMANDS.BLOCKCHAIN_GET_BLOCK, 'A valid block hash in Base64 format required.');
             return;
         }
+        console.log('\n\n\nHash:', hash);
         this.$.blockchain.getBlock(hash)
-            .then(block => { console.log('found block', block);  return this._getBlockInfo(block)})
+            .then(block => this._getBlockInfo(block))
             .then(blockInfo => this._send(ws, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_BLOCK, blockInfo))
             .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.BLOCKCHAIN_GET_BLOCK, 'Failed to get block '+hashString+' - '+e));
     }
