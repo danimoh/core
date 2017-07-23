@@ -36,6 +36,8 @@ class RemoteAPI {
             BLOCKCHAIN_NEXT_COMPACT_TARGET: 'blockchain-next-compact-target',
             NETWORK_STATE: 'network',
             NETWORK_PEERS_CHANGED: 'network-peers-changed',
+            NETWORK_PEER_JOINED: 'network-peer-joined',
+            NETWORK_PEER_LEFT: 'network-peer-left',
             MEMPOOL_STATE: 'mempool',
             MEMPOOL_TRANSACTION_ADDED: 'mempool-transaction-added',
             MEMPOOL_TRANSACTIONS_READY: 'mempool-transactions-ready',
@@ -72,6 +74,8 @@ class RemoteAPI {
         $.blockchain.on('head-changed', async head => this._broadcast(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED, await this._getBlockInfo(head)));
         $.blockchain.on('ready', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_READY));
         $.network.on('peers-changed', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, this._getNetworkState()));
+        $.network.on('peer-joined', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_PEER_JOINED));
+        $.network.on('peer-left', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_PEER_LEFT));
         $.mempool.on('transactions-ready', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY));
         $.mempool.on('transaction-added', transaction => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, this._getTransactionInfo(transaction)));
         $.miner.on('start', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_STARTED));
@@ -126,9 +130,10 @@ class RemoteAPI {
     _isValidListenerType(type) {
         const VALID_LISTENER_TYPES = [RemoteAPI.MESSAGE_TYPES.ACCOUNTS_POPULATED, RemoteAPI.MESSAGE_TYPES.CONSENSUS_ESTABLISHED,
             RemoteAPI.MESSAGE_TYPES.CONSENSUS_LOST, RemoteAPI.MESSAGE_TYPES.CONSENSUS_SYNCING, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED,
-            RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_READY, RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED,
-            RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY, RemoteAPI.MESSAGE_TYPES.MINER_STARTED, RemoteAPI.MESSAGE_TYPES.MINER_STOPPED,
-            RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED, RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED];
+            RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_READY, RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, RemoteAPI.MESSAGE_TYPES.NETWORK_PEER_JOINED,
+            RemoteAPI.MESSAGE_TYPES.NETWORK_PEER_LEFT, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY,
+            RemoteAPI.MESSAGE_TYPES.MINER_STARTED, RemoteAPI.MESSAGE_TYPES.MINER_STOPPED, RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED,
+            RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED];
         return type && (VALID_LISTENER_TYPES.indexOf(type) !== -1 || type.startsWith(RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED));
     }
 
@@ -296,6 +301,8 @@ class RemoteAPI {
             this._send(ws, type, this._getMempoolState());
         } else if (type === RemoteAPI.MESSAGE_TYPES.MINER_STATE) {
             this._send(ws, type, this._getMinerState());
+        } else if (type === RemoteAPI.MESSAGE_TYPES.WALLET_STATE) {
+            this._send(ws, type, this._getWalletState());
         } else {
             this._sendError(ws, RemoteAPI.COMMANDS.GET_STATE, type + ' is not a valid type.');
         }
@@ -314,10 +321,7 @@ class RemoteAPI {
                 mempool: this._getMempoolState(),
                 miner: this._getMinerState(),
                 network: this._getNetworkState(),
-                wallet: {
-                    address: this.$.wallet.address.toHex(),
-                    publicKey: this.$.wallet.publicKey.toBase64()
-                }
+                wallet: this._getWalletState()
             };
         });
     }
@@ -410,7 +414,7 @@ class RemoteAPI {
         };
     }
 
-    _getTransactionInfo(transaction) {
+    async _getTransactionInfo(transaction) {
         return {
             fee: transaction.fee,
             nonce: transaction.nonce,
@@ -434,6 +438,13 @@ class RemoteAPI {
             address: this.$.miner.address.toHex(),
             hashrate: this.$.miner.hashrate,
             working: this.$.miner.working
+        };
+    }
+
+    _getWalletState() {
+        return {
+            address: this.$.wallet.address.toHex(),
+            publicKey: this.$.wallet.publicKey.toBase64()
         };
     }
 }
