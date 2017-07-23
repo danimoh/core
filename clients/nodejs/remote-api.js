@@ -237,7 +237,7 @@ class RemoteAPI {
 
     _sendAccountsHash(ws) {
         this.$.accounts.hash()
-            .then(hash => this._send(ws, RemoteAPI.MESSAGE_TYPES.ACCOUNTS_HASH, hash))
+            .then(hash => this._send(ws, RemoteAPI.MESSAGE_TYPES.ACCOUNTS_HASH, hash.toBase64()))
             .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_HASH, 'Failed to get accounts hash.'));
     }
 
