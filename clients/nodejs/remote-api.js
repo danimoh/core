@@ -227,7 +227,7 @@ class RemoteAPI {
             return;
         }
         this.$.accounts.getBalance(address)
-            .then(balance => this._send(ws, RemoteAPI.MESSAGE_TYPES.ACCOUNTS_GET_BALANCE, {
+            .then(balance => this._send(ws, RemoteAPI.MESSAGE_TYPES.ACCOUNTS_BALANCE, {
                 address: addressString,
                 value: balance.value,
                 nonce: balance.nonce
