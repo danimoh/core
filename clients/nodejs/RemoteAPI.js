@@ -11,7 +11,9 @@ class RemoteAPI {
             REGISTER_LISTENER: 'register-listener',
             UNREGISTER_LISTENER: 'unregister-listener',
             ACCOUNTS_GET_BALANCE: 'accounts-get-balance',
-            ACCOUNTS_GET_HASH: 'accounts-get-hash'
+            ACCOUNTS_GET_HASH: 'accounts-get-hash',
+            BLOCKCHAIN_GET_BLOCK: 'get-block',
+            BLOCKCHAIN_GET_NEXT_COMPACT_TARGET: 'blockchain-get-next-compact-target'
         };
     }
     static get MESSAGE_TYPES() {
@@ -28,6 +30,9 @@ class RemoteAPI {
             CONSENSUS_SYNCING: 'consensus-syncing',
             BLOCKCHAIN_STATE: 'blockchain',
             BLOCKCHAIN_HEAD_CHANGED: 'blockchain-head-changed',
+            BLOCKCHAIN_READY: 'blockchain-ready',
+            BLOCKCHAIN_BLOCK: 'blockchain-block',
+            BLOCKCHAIN_NEXT_COMPACT_TARGET: 'blockchain-next-compact-target',
             NETWORK_STATE: 'network',
             NETWORK_PEERS_CHANGED: 'network-peers-changed',
             MEMPOOL_STATE: 'mempool',
@@ -63,6 +68,7 @@ class RemoteAPI {
         this._observedAccounts = new Set();
         $.accounts.on('populated', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.ACCOUNTS_POPULATED));
         $.blockchain.on('head-changed', async head => this._broadcast(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED, await this._getBlockInfo(head)));
+        $.blockchain.on('ready', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_READY));
         $.network.on('peers-changed', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, this._getNetworkState()));
         $.mempool.on('transactions-ready', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY));
         $.mempool.on('transaction-added', transaction => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, this._getTransactionInfo(transaction)));
@@ -104,6 +110,10 @@ class RemoteAPI {
             this._sendAccountsBalance(ws, message.address);
         } else if (message.command === RemoteAPI.COMMANDS.ACCOUNTS_GET_HASH) {
             this._sendAccountsHash(ws);
+        } else if (message.command === RemoteAPI.COMMANDS.BLOCKCHAIN_GET_BLOCK) {
+            this._sendBlock(ws, message.hash);
+        } else if (message.command === RemoteAPI.COMMANDS.BLOCKCHAIN_GET_NEXT_COMPACT_TARGET) {
+            this._sendNextCompactTarget(ws);
         } else {
             this._sendError(ws, message.command, 'Unsupported command.');
         }
@@ -112,9 +122,9 @@ class RemoteAPI {
     _isValidListenerType(type) {
         const VALID_LISTENER_TYPES = [RemoteAPI.MESSAGE_TYPES.ACCOUNTS_POPULATED, RemoteAPI.MESSAGE_TYPES.CONSENSUS_ESTABLISHED,
             RemoteAPI.MESSAGE_TYPES.CONSENSUS_LOST, RemoteAPI.MESSAGE_TYPES.CONSENSUS_SYNCING, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED,
-            RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY,
-            RemoteAPI.MESSAGE_TYPES.MINER_STARTED, RemoteAPI.MESSAGE_TYPES.MINER_STOPPED, RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED,
-            RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED];
+            RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_READY, RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED,
+            RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY, RemoteAPI.MESSAGE_TYPES.MINER_STARTED, RemoteAPI.MESSAGE_TYPES.MINER_STOPPED,
+            RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED, RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED];
         return type && (VALID_LISTENER_TYPES.indexOf(type) !== -1 || type.startsWith(RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED));
     }
 
@@ -244,6 +254,26 @@ class RemoteAPI {
             .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_HASH, 'Failed to get accounts hash.'));
     }
 
+    _sendBlock(ws, hashString) {
+        let hash;
+        try {
+            hash = Nimiq.Hash.fromBase64(hashString);
+        } catch(e) {
+            this._sendError(ws, RemoteAPI.COMMANDS.BLOCKCHAIN_GET_BLOCK, 'A valid block hash in Base64 format required.');
+            return;
+        }
+        this.$.blockchain.getBlock(hash)
+            .then(block => this._getBlockInfo(block))
+            .then(blockInfo => this._send(ws, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_BLOCK, blockInfo))
+            .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.BLOCKCHAIN_GET_BLOCK, 'Failed to get block '+hashString));
+    }
+
+    _sendNextCompactTarget(ws) {
+        this.$.blockchain.getNextCompactTarget()
+            .then(nextCompactTarget => this._send(ws, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_NEXT_COMPACT_TARGET, nextCompactTarget))
+            .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.BLOCKCHAIN_GET_NEXT_COMPACT_TARGET, 'Failed to get next compact target.'));
+    }
+
     _sendState(ws, type) {
         if (type === RemoteAPI.MESSAGE_TYPES.ACCOUNTS_STATE) {
             this._getAccountsState().then(accountsState => this._send(ws, type, accountsState));
@@ -296,25 +326,33 @@ class RemoteAPI {
     }
 
     async _getBlockInfo(block) {
-        return {
-            header: {
-                difficulty: block.header.difficulty,
-                height: block.header.height,
-                nBits: block.header.nBits,
-                nonce: block.header.nonce,
-                prevHash: block.header.prevHash.toBase64(),
-                serializedSize: block.header.serializedSize,
-                target: block.header.target,
-                timestamp: block.header.timestamp
-            },
-            body: {
-                hash: (await block.body.hash()).toBase64(),
-                minerAddr: block.body.minerAddr.toHex(),
-                serializedSize: block.body.serializedSize,
-                transactionCount: block.body.transactionCount
-            },
-            serializedSize: block.serializedSize
-        }
+        return Promise.all([
+            block.header.hash(),
+            block.body.hash()
+        ]).then(promiseResults => {
+            const [blockHash, bodyHash] = promiseResults;
+            return {
+                header: {
+                    difficulty: block.header.difficulty,
+                    height: block.header.height,
+                    nBits: block.header.nBits,
+                    nonce: block.header.nonce,
+                    prevHash: block.header.prevHash.toBase64(),
+                    serializedSize: block.header.serializedSize,
+                    target: block.header.target,
+                    timestamp: block.header.timestamp,
+                    hash: blockHash.toBase64()
+                },
+                body: {
+                    hash: bodyHash.toBase64(),
+                    minerAddr: block.body.minerAddr.toHex(),
+                    serializedSize: block.body.serializedSize,
+                    transactionCount: block.body.transactionCount
+                },
+                serializedSize: block.serializedSize,
+                hash: blockHash.toBase64()
+            };
+        });
     }
 
     async _getBlockchainState() {
@@ -329,6 +367,7 @@ class RemoteAPI {
                 nextCompactTarget: nextCompactTarget,
                 height: this.$.blockchain.height,
                 head: headInfo,
+                headHash: this.$.blockchain.headHash,
                 totalWork: this.$.blockchain.totalWork
             };
         });
