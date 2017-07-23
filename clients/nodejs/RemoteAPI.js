@@ -330,27 +330,43 @@ class RemoteAPI {
             block.header.hash(),
             block.body.hash()
         ]).then(promiseResults => {
-            const [blockHash, bodyHash] = promiseResults;
+            let [blockHash, bodyHash] = promiseResults;
+            blockHash = blockHash.toBase64();
+            bodyHash = bodyHash.toBase64();
+            let prevHash = block.header.prevHash.toBase64();
+            let minerAddr = block.minerAddr.toHex();
             return {
                 header: {
                     difficulty: block.header.difficulty,
                     height: block.header.height,
                     nBits: block.header.nBits,
                     nonce: block.header.nonce,
-                    prevHash: block.header.prevHash.toBase64(),
+                    prevHash: prevHash,
                     serializedSize: block.header.serializedSize,
                     target: block.header.target,
                     timestamp: block.header.timestamp,
-                    hash: blockHash.toBase64()
+                    hash: blockHash
                 },
                 body: {
-                    hash: bodyHash.toBase64(),
-                    minerAddr: block.body.minerAddr.toHex(),
+                    hash: bodyHash,
+                    minerAddr: minerAddr,
                     serializedSize: block.body.serializedSize,
                     transactionCount: block.body.transactionCount
                 },
+                accountsHash: block.accountsHash.toBase64(),
+                hash: blockHash,
+                bodyHash: bodyHash,
+                difficulty: block.difficulty,
+                height: block.height,
+                minerAddr: minerAddr,
+                nBits: block.nBits,
+                nonce: block.nonce,
+                prevHash: prevHash,
                 serializedSize: block.serializedSize,
-                hash: blockHash.toBase64()
+                target: block.target,
+                timestamp: block.timestamp,
+                transactionCount: block.transactionCount,
+                transactions: block.transactions.map(this._getTransactionInfo)
             };
         });
     }
