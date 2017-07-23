@@ -255,7 +255,6 @@ class RemoteAPI {
     }
 
     _sendBlock(ws, hashString) {
-        hashString = hashString.toUpperCase();
         let hash;
         try {
             hash = Nimiq.Hash.fromBase64(hashString);
@@ -263,7 +262,7 @@ class RemoteAPI {
             this._sendError(ws, RemoteAPI.COMMANDS.BLOCKCHAIN_GET_BLOCK, 'A valid block hash in Base64 format required.');
             return;
         }
-        console.log('\n\n\nHash:', hash.toBase64(), hashString, hash.toBase64().toUpperCase() === hashString);
+        console.log('\n\n\nHash:', hash.toBase64(), hashString, hash.toBase64().toLowerCase() === hashString.toLowerCase());
         this.$.blockchain.getBlock(hash)
             .then(block => this._getBlockInfo(block))
             .then(blockInfo => this._send(ws, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_BLOCK, blockInfo))
