@@ -19,6 +19,7 @@ class RemoteAPI {
             SNAPSHOT: 'snapshot',
             ACCOUNTS_STATE: 'accounts',
             ACCOUNTS_ACCOUNT_CHANGED: 'accounts-account-changed',
+            ACCOUNTS_POPULATED: 'accounts-populated',
             ACCOUNTS_BALANCE: 'accounts-balance',
             ACCOUNTS_HASH: 'accounts-hash',
             CONSENSUS_STATE: 'consensus',
@@ -60,6 +61,7 @@ class RemoteAPI {
         // listeners:
         this._listeners = {};
         this._observedAccounts = new Set();
+        $.accounts.on('populated', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.ACCOUNTS_POPULATED));
         $.blockchain.on('head-changed', async head => this._broadcast(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED, await this._getBlockInfo(head)));
         $.network.on('peers-changed', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, this._getNetworkState()));
         $.mempool.on('transactions-ready', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY));
@@ -108,10 +110,11 @@ class RemoteAPI {
     }
 
     _isValidListenerType(type) {
-        const VALID_LISTENER_TYPES = [RemoteAPI.MESSAGE_TYPES.CONSENSUS_ESTABLISHED, RemoteAPI.MESSAGE_TYPES.CONSENSUS_LOST,
-            RemoteAPI.MESSAGE_TYPES.CONSENSUS_SYNCING, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED, RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED,
-            RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY, RemoteAPI.MESSAGE_TYPES.MINER_STARTED,
-            RemoteAPI.MESSAGE_TYPES.MINER_STOPPED, RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED, RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED];
+        const VALID_LISTENER_TYPES = [RemoteAPI.MESSAGE_TYPES.ACCOUNTS_POPULATED, RemoteAPI.MESSAGE_TYPES.CONSENSUS_ESTABLISHED,
+            RemoteAPI.MESSAGE_TYPES.CONSENSUS_LOST, RemoteAPI.MESSAGE_TYPES.CONSENSUS_SYNCING, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED,
+            RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY,
+            RemoteAPI.MESSAGE_TYPES.MINER_STARTED, RemoteAPI.MESSAGE_TYPES.MINER_STOPPED, RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED,
+            RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED];
         return type && (VALID_LISTENER_TYPES.indexOf(type) !== -1 || type.startsWith(RemoteAPI.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED));
     }
 
