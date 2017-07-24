@@ -253,7 +253,7 @@ class RemoteAPI {
                 address: addressString,
                 balance: BufferUtils.toBase64(balance.serialize())
             }))
-            .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, 'Failed to get balance for '+addressString));
+            .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, 'Failed to get balance for '+addressString+' - '+e));
     }
 
     _sendAccountsHash(ws) {
