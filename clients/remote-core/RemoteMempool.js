@@ -69,3 +69,4 @@ class RemoteMempool extends RemoteClass {
         return transactions;
     }
 }
+Class.register(RemoteMempool);

@@ -10,3 +10,4 @@ class RemoteWallet extends RemoteClass {
         super(RemoteWallet.IDENTIFIER, RemoteWallet.ATTRIBUTES, {}, remoteConnection);
     }
 }
+Class.register(RemoteWallet);

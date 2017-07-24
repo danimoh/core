@@ -69,3 +69,4 @@ class RemoteBlockchain extends RemoteClass {
         }, message => message.type === RemoteBlockchain.MESSAGE_TYPES.BLOCKCHAIN_BLOCK && message.data.hash === hashString);
     }
 }
+Class.register(RemoteBlockchain);

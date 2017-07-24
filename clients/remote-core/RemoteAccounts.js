@@ -35,18 +35,20 @@ class RemoteAccounts extends RemoteClass {
         this._registeredAccountListeners = new Set();
     }
 
-    async hash() {
+    hash() {
         return this._remoteConnection.request({
             command: RemoteAccounts.COMMANDS.GET_HASH
-        }, RemoteAccounts.MESSAGE_TYPES.ACCOUNTS_HASH);
+        }, RemoteAccounts.MESSAGE_TYPES.ACCOUNTS_HASH)
+        .then(hashBase64 => Nimiq.Hash.unserialize(Nimiq.BufferUtils.fromBase64(hashBase64)));
     }
 
-    async getBalance(addressString) {
-        addressString = addressString.toLowerCase();
+    getBalance(address) {
+        const addressString = address.toHex().toLowerCase();
         return this._remoteConnection.request({
             command: RemoteAccounts.COMMANDS.GET_BALANCE,
             address: addressString
-        }, message => message.type === RemoteAccounts.MESSAGE_TYPES.ACCOUNTS_BALANCE && message.data.address.toLowerCase() === addressString);
+        }, message => message.type === RemoteAccounts.MESSAGE_TYPES.ACCOUNTS_BALANCE && message.data.address.toLowerCase() === addressString)
+        .then(data => Nimiq.Balance.unserialize(Nimiq.BufferUtils.fromBase64(data.balance)))
     }
 
     _updateState() {
@@ -54,17 +56,11 @@ class RemoteAccounts extends RemoteClass {
         return;
     }
 
-    _isHex(str) {
-        return !(/[^0-9a-f]/.test(str));
-    }
-
     _isValidEvent(type) {
-        type = type.toLowerCase();
-        if (this._isHex(type)) {
-            // a hex address
+        if (type instanceof Nimiq.Address) {
             return true;
         } else {
-            // no hex address, just a normal event
+            // just a normal event
             return super._isValidEvent(type);
         }
     }
@@ -74,12 +70,7 @@ class RemoteAccounts extends RemoteClass {
      */
     _handleEvents(message) {
         if (message.type.startsWith(RemoteAccounts.MESSAGE_TYPES.ACCOUNTS_ACCOUNT_CHANGED)) {
-            this.fire(message.data.address, {
-                balance: {
-                    value: message.data.value,
-                    nonce: message.data.nonce
-                }
-            });
+            this.fire(message.data.address.toLowerCase(), Nimiq.Account.unserialize(BufferUtils.fromBase64(message.data.account)));
         } else {
             super._handleEvents(message);
         }
@@ -89,10 +80,9 @@ class RemoteAccounts extends RemoteClass {
      * @overwrites on in RemoteClass
      */
     on(type, callback, lazyRegister) {
-        type = type.toLowerCase();
-        if (this._isHex(type)) {
-            // a hex address
-            Observable.prototype.on.call(this, type, callback); /* register the callback in Observer */
+        if (type instanceof Nimiq.Address) {
+            type = type.toHex().toLowerCase();
+            RemoteObservable.prototype.on.call(this, type, callback); /* register the callback in Observer */
             if (!lazyRegister && !this._registeredAccountListeners.has(type)) {
                 this._registeredAccountListeners.add(type);
                 this._remoteConnection.send({
@@ -111,10 +101,9 @@ class RemoteAccounts extends RemoteClass {
      * @overwrites off in RemoteClass
      */
     off(type, callback) {
-        type = type.toLowerCase();
-        if (this._isHex(type)) {
-            // a hex address
-            Observable.prototype.off.call(this, type, callback); /* remove the callback in Observer */
+        if (type instanceof Nimiq.Address) {
+            type = type.toHex().toLowerCase();
+            RemoteObservable.prototype.off.call(this, type, callback); /* remove the callback in Observer */
             if ((type in this._listeners) && this._listeners[type].length === 0 && this._registeredAccountListeners.has(type)) {
                 this._registeredAccountListeners.delete(type);
                 this._remoteConnection.send({
@@ -129,3 +118,4 @@ class RemoteAccounts extends RemoteClass {
         }
     }
 }
+Class.register(RemoteAccounts);

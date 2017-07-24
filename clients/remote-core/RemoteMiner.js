@@ -36,3 +36,4 @@ class RemoteMiner extends RemoteClass {
         this.on(RemoteMiner.EVENTS.HASHRATE_CHANGED, hashrate => this.hashrate = hashrate, !live);
     }
 }
+Class.register(RemoteMiner);

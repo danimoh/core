@@ -1,7 +1,7 @@
 /** 
  * A wrapper around WebSocket that supports connection reestablishment
  */
-class RemoteConnection extends Observable {
+class RemoteConnection extends RemoteObservable {
     static get EVENTS() {
         return {
             CONNECTION_ESTABLISHED: 'connection-established',
@@ -89,3 +89,4 @@ class RemoteConnection extends Observable {
         });
     }
 }
+Class.register(RemoteConnection);

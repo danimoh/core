@@ -1,4 +1,4 @@
-class RemoteClass extends Observable {
+class RemoteClass extends RemoteObservable {
     constructor(identifier, attributes, eventMap, remoteConnection) {
         super(eventMap);
         this._identifier = identifier;
@@ -59,3 +59,4 @@ class RemoteClass extends Observable {
         }
     }
 }
+Class.register(RemoteClass);

@@ -38,3 +38,4 @@ class RemoteNetwork extends RemoteClass {
         return (window.navigator.onLine === undefined || window.navigator.onLine) && this._remoteConnection.isConnected();
     }
 }
+Class.register(RemoteNetwork);

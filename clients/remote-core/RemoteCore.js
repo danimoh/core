@@ -22,3 +22,4 @@ class RemoteCore {
         });
     }
 }
+Class.register(RemoteCore);

@@ -237,8 +237,7 @@ class RemoteAPI {
         this.$.accounts.on(address, account => {
             this._broadcast(messageType, {
                 address: addressString,
-                value: account.balance.value,
-                nonce: account.balance.nonce
+                account: BufferUtils.toBase64(account.serialize())
             });
         });
     }
@@ -252,8 +251,7 @@ class RemoteAPI {
         this.$.accounts.getBalance(address)
             .then(balance => this._send(ws, RemoteAPI.MESSAGE_TYPES.ACCOUNTS_BALANCE, {
                 address: addressString,
-                value: balance.value,
-                nonce: balance.nonce
+                balance: BufferUtils.toBase64(balance.serialize())
             }))
             .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, 'Failed to get balance for '+addressString));
     }
