@@ -237,7 +237,7 @@ class RemoteAPI {
         this.$.accounts.on(address, account => {
             this._broadcast(messageType, {
                 address: addressString,
-                account: BufferUtils.toBase64(account.serialize())
+                account: Nimiq.BufferUtils.toBase64(account.serialize())
             });
         });
     }
@@ -251,7 +251,7 @@ class RemoteAPI {
         this.$.accounts.getBalance(address)
             .then(balance => this._send(ws, RemoteAPI.MESSAGE_TYPES.ACCOUNTS_BALANCE, {
                 address: addressString,
-                balance: BufferUtils.toBase64(balance.serialize())
+                balance: Nimiq.BufferUtils.toBase64(balance.serialize())
             }))
             .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, 'Failed to get balance for '+addressString+' - '+e));
     }
