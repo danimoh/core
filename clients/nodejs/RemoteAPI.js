@@ -72,7 +72,7 @@ class RemoteAPI {
         this._listeners = {};
         this._observedAccounts = new Set();
         $.accounts.on('populated', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.ACCOUNTS_POPULATED));
-        $.blockchain.on('head-changed', async head => this._broadcast(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED, await this._getBlockInfo(head)));
+        $.blockchain.on('head-changed', head => this._broadcast(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_HEAD_CHANGED, this._serializeToBase64(head)));
         $.blockchain.on('ready', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_READY));
         $.network.on('peers-changed', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_PEERS_CHANGED, this._getNetworkState()));
         $.network.on('peer-joined', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_PEER_JOINED));
@@ -218,6 +218,10 @@ class RemoteAPI {
         this._send(ws, RemoteAPI.MESSAGE_TYPES.ERROR, errorMessage);
     }
 
+    _serializeToBase64(serializable) {
+        return Nimiq.BufferUtils.toBase64(serializable.serialize());
+    }
+
     _parseAddress(addressString) {
         try {
             return Nimiq.Address.fromHex(addressString);
@@ -237,7 +241,7 @@ class RemoteAPI {
         this.$.accounts.on(address, account => {
             this._broadcast(messageType, {
                 address: addressString,
-                account: Nimiq.BufferUtils.toBase64(account.serialize())
+                account: this._serializeToBase64(account)
             });
         });
     }
@@ -251,7 +255,7 @@ class RemoteAPI {
         this.$.accounts.getBalance(address)
             .then(balance => this._send(ws, RemoteAPI.MESSAGE_TYPES.ACCOUNTS_BALANCE, {
                 address: addressString,
-                balance: Nimiq.BufferUtils.toBase64(balance.serialize())
+                balance: this._serializeToBase64(balance)
             }))
             .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.ACCOUNTS_GET_BALANCE, 'Failed to get balance for '+addressString+' - '+e));
     }
@@ -270,10 +274,8 @@ class RemoteAPI {
             this._sendError(ws, RemoteAPI.COMMANDS.BLOCKCHAIN_GET_BLOCK, 'A valid block hash in Base64 format required.');
             return;
         }
-        console.log('\n\n\nHash:', hash.toBase64(), hashString, hash.toBase64() === hashString);
         this.$.blockchain.getBlock(hash)
-            .then(block => this._getBlockInfo(block))
-            .then(blockInfo => this._send(ws, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_BLOCK, blockInfo))
+            .then(block => this._send(ws, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_BLOCK, this._serializeToBase64(block)))
             .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.BLOCKCHAIN_GET_BLOCK, 'Failed to get block '+hashString+' - '+e));
     }
 
@@ -384,22 +386,15 @@ class RemoteAPI {
         });
     }
 
-    async _getBlockchainState() {
-        return Promise.all([
-            this.$.blockchain.getNextCompactTarget(),
-            this._getBlockInfo(this.$.blockchain.head)
-        ]).then(promiseResults => {
-            const [nextCompactTarget, headInfo] = promiseResults;
-            return {
-                busy: this.$.blockchain.busy,
-                checkpointLoaded: this.$.blockchain.checkpointLoaded,
-                nextCompactTarget: nextCompactTarget,
-                height: this.$.blockchain.height,
-                head: headInfo,
-                headHash: this.$.blockchain.headHash,
-                totalWork: this.$.blockchain.totalWork
-            };
-        });
+    _getBlockchainState() {
+        return {
+            busy: this.$.blockchain.busy,
+            checkpointLoaded: this.$.blockchain.checkpointLoaded,
+            height: this.$.blockchain.height,
+            head: this._serializeToBase64(this.$.blockchain.head),
+            headHash: this.$.blockchain.headHash,
+            totalWork: this.$.blockchain.totalWork
+        };
     }
 
     _getNetworkState() {
