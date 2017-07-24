@@ -390,7 +390,7 @@ class RemoteAPI {
             checkpointLoaded: this.$.blockchain.checkpointLoaded,
             height: this.$.blockchain.height,
             head: this._serializeToBase64(this.$.blockchain.head),
-            headHash: this.$.blockchain.headHash,
+            headHash: this.$.blockchain.headHash.toBase64(),
             totalWork: this.$.blockchain.totalWork
         };
     }
