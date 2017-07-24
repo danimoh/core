@@ -295,7 +295,7 @@ class RemoteAPI {
         } else if (type === RemoteAPI.MESSAGE_TYPES.CONSENSUS_STATE) {
             this._send(ws, type, this._getConsensusState());
         } else if (type === RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_STATE) {
-            this._getBlockchainState().then(blockchainState => this._send(ws, type, blockchainState));
+            this._send(ws, type, this._getBlockchainState());
         } else if (type === RemoteAPI.MESSAGE_TYPES.NETWORK_STATE) {
             this._send(ws, type, this._getNetworkState());
         } else if (type === RemoteAPI.MESSAGE_TYPES.MEMPOOL_STATE) {
@@ -309,15 +309,11 @@ class RemoteAPI {
         }
     }
 
-    async _getSnapShot() {
-        return await Promise.all([
-            this._getAccountsState(),
-            this._getBlockchainState()
-        ]).then(promiseResults => {
-            let [accountsState, blockchainState] = promiseResults;
+    _getSnapShot() {
+        return this._getAccountsState().then(accountsState => {
             return {
                 accounts: accountsState,
-                blockchain: blockchainState,
+                blockchain: this._getBlockchainState(),
                 consensus: this._getConsensusState(),
                 mempool: this._getMempoolState(),
                 miner: this._getMinerState(),
@@ -327,10 +323,12 @@ class RemoteAPI {
         });
     }
 
-    async _getAccountsState() {
-        return {
-            hash: (await this.$.accounts.hash()).toBase64()
-        };
+    _getAccountsState() {
+        return this.$.accounts.hash().then(hash => {
+            return {
+                hash: hash.toBase64()
+            };
+        });
     }
 
     _getConsensusState() {
