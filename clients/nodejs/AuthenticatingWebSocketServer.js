@@ -15,8 +15,8 @@ class AuthenticatingWebSocketServer extends Nimiq.Observable {
         const authSecret = 'fancypw';
 
         const sslOptions = {
-            key: fs.readFileSync(sslKey),
-            cert: fs.readFileSync(sslCert)
+            key: fs.readFileSync(sslKeyFile),
+            cert: fs.readFileSync(sslCertFile)
         };
         const httpsServer = https.createServer(sslOptions, (req, res) => {
             res.writeHead(200);
