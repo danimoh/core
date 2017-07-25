@@ -1,6 +1,6 @@
 const Nimiq = require('../../dist/node.js');
-const AuthenticatedConnection = require('AuthenticatedConnection.js');
-const AuthenticatingWebSocketServer = require('AuthenticatingWebSocketServer.js');
+const AuthenticatedConnection = require('./AuthenticatedConnection.js');
+const AuthenticatingWebSocketServer = require('./AuthenticatingWebSocketServer.js');
 
 class RemoteAPI {
     static get COMMANDS () {
