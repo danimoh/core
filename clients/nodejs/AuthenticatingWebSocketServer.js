@@ -1,4 +1,5 @@
 const Nimiq = require('../../dist/node.js');
+const AuthenticatedConnection = require('./AuthenticatedConnection.js');
 const WebSocket = require('ws'); // https://github.com/websockets/ws
 const https = require('https');
 const fs = require('fs');
