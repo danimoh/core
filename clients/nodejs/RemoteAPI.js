@@ -78,7 +78,7 @@ class RemoteAPI {
         $.network.on('peer-joined', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_PEER_JOINED));
         $.network.on('peer-left', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.NETWORK_PEER_LEFT));
         $.mempool.on('transactions-ready', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS_READY));
-        $.mempool.on('transaction-added', transaction => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, this._getTransactionInfo(transaction)));
+        $.mempool.on('transaction-added', transaction => this._broadcast(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTION_ADDED, this._serializeToBase64(transaction)));
         $.miner.on('start', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_STARTED));
         $.miner.on('stop', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_STOPPED));
         $.miner.on('hashrate-changed', hashrate => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED, hashrate));
@@ -289,7 +289,7 @@ class RemoteAPI {
     }
 
     _sendMempoolTransactions(ws) {
-        this._send(ws, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS, this.$.mempool.getTransactions().map(this._getTransactionInfo));
+        this._send(ws, RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS, this.$.mempool.getTransactions().map(this._serializeToBase64));
     }
 
     _sendState(ws, type) {
@@ -424,7 +424,7 @@ class RemoteAPI {
 
     _getMempoolState() {
         return {
-            transactions: this.$.mempool.getTransactions().map(this._getTransactionInfo)
+            transactions: this.$.mempool.getTransactions().map(this._serializeToBase64)
         };
     }
 
