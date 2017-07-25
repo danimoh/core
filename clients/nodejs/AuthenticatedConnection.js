@@ -31,8 +31,10 @@ class AuthenticatedConnection extends Nimiq.Observable {
         this._ws.on('close', () => this.fire(AuthenticatedConnection.EVENTS.CONNECTION_CLOSED));
         this._ws.on('error', e => this.fire(AuthenticatedConnection.EVENTS.CONNECTION_ERROR, e));
         if (this._ws.readyState === WebSocket.OPEN) {
+            console.log('\n\nWS already open.');
             this._startAuthentication();
         } else {
+            console.log('\n\nWs not open yet');
             this._ws.on('open', () => this._startAuthentication());
         }
     }
@@ -72,6 +74,7 @@ class AuthenticatedConnection extends Nimiq.Observable {
         if (this.authenticated) {
             return;
         }
+        console.log('\n\nstart authentification');
         this._authChallenge = await this._generateChallenge();
         this._authTimeout = setTimeout(() => this._onAuthenticationTimeout(), AuthenticatedConnection.AUTHENTICATION_TIMEOUT);
         this.send(AuthenticatedConnection.MESSAGE_TYPES.AUTHENTICATION_SERVER_CLIENT_CHALLENGE, this._authChallenge);
