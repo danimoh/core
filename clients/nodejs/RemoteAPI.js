@@ -82,7 +82,7 @@ class RemoteAPI {
         $.miner.on('start', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_STARTED));
         $.miner.on('stop', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_STOPPED));
         $.miner.on('hashrate-changed', hashrate => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_HASHRATE_CHANGED, hashrate));
-        $.miner.on('block-mined', block => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED, this._getBlockInfo(block)));
+        $.miner.on('block-mined', block => this._broadcast(RemoteAPI.MESSAGE_TYPES.MINER_BLOCK_MINED, this._serializeToBase64(block)));
         $.consensus.on('established', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.CONSENSUS_ESTABLISHED));
         $.consensus.on('lost', () => this._broadcast(RemoteAPI.MESSAGE_TYPES.CONSENSUS_LOST));
         $.consensus.on('syncing', targetHeight => this._broadcast(RemoteAPI.MESSAGE_TYPES.CONSENSUS_SYNCING, targetHeight));
@@ -340,53 +340,6 @@ class RemoteAPI {
         };
     }
 
-    async _getBlockInfo(block) {
-        return Promise.all([
-            block.header.hash(),
-            block.body.hash()
-        ]).then(promiseResults => {
-            let [blockHash, bodyHash] = promiseResults;
-            blockHash = blockHash.toBase64();
-            bodyHash = bodyHash.toBase64();
-            let prevHash = block.header.prevHash.toBase64();
-            let minerAddr = block.minerAddr.toHex();
-            return {
-                header: {
-                    difficulty: block.header.difficulty,
-                    height: block.header.height,
-                    nBits: block.header.nBits,
-                    nonce: block.header.nonce,
-                    prevHash: prevHash,
-                    serializedSize: block.header.serializedSize,
-                    target: block.header.target,
-                    timestamp: block.header.timestamp,
-                    hash: blockHash
-                },
-                body: {
-                    hash: bodyHash,
-                    minerAddr: minerAddr,
-                    serializedSize: block.body.serializedSize,
-                    transactionCount: block.body.transactionCount,
-                    transactions: block.body.transactions.map(this._getTransactionInfo)
-                },
-                accountsHash: block.accountsHash.toBase64(),
-                hash: blockHash,
-                bodyHash: bodyHash,
-                difficulty: block.difficulty,
-                height: block.height,
-                minerAddr: minerAddr,
-                nBits: block.nBits,
-                nonce: block.nonce,
-                prevHash: prevHash,
-                serializedSize: block.serializedSize,
-                target: block.target,
-                timestamp: block.timestamp,
-                transactionCount: block.transactionCount,
-                transactions: block.transactions.map(this._getTransactionInfo)
-            };
-        });
-    }
-
     _getBlockchainState() {
         return {
             busy: this.$.blockchain.busy,
@@ -406,19 +359,6 @@ class RemoteAPI {
             peerCountDumb: this.$.network.peerCountDumb,
             peerCountWebRtc: this.$.network.peerCountWebRtc,
             peerCountWebSocket: this.$.network.peerCountWebSocket
-        };
-    }
-
-    async _getTransactionInfo(transaction) {
-        return {
-            fee: transaction.fee,
-            nonce: transaction.nonce,
-            recipientAddr: transaction.recipientAddr.toHex(),
-            senderPubKey: transaction.senderPubKey.toBase64(),
-            serializedContentSize: transaction.serializedContentSize,
-            serializedSize: transaction.serializedSize,
-            signature: transaction.signature.toBase64(),
-            value: transaction.value
         };
     }
 
