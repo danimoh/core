@@ -11,6 +11,7 @@ class AuthenticatingWebSocketServer extends Nimiq.Observable {
         };
     }
     constructor(port, sslKeyFile, sslCertFile, passwordFile) {
+        super();
         //const authSecret = fs.readFileSync(passwordFile);
         const authSecret = 'fancypw';
 
