@@ -275,7 +275,10 @@ class RemoteAPI {
             return;
         }
         this.$.blockchain.getBlock(hash)
-            .then(block => this._send(ws, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_BLOCK, this._serializeToBase64(block)))
+            .then(block => this._send(ws, RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_BLOCK, {
+                block: this._serializeToBase64(block),
+                hash: hashString
+            }))
             .catch(e => this._sendError(ws, RemoteAPI.COMMANDS.BLOCKCHAIN_GET_BLOCK, 'Failed to get block '+hashString+' - '+e));
     }
 
