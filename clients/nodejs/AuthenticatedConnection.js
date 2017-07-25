@@ -3,8 +3,8 @@ const WebSocket = require('ws'); // https://github.com/websockets/ws
 
 
 class AuthenticatedConnection extends Nimiq.Observable {
-    get AUTHENTICATION_TIMEOUT() { return 30000; } // 30 seconds
-    get EVENTS() {
+    static get AUTHENTICATION_TIMEOUT() { return 30000; } // 30 seconds
+    static get EVENTS() {
         return {
             MESSAGE: 'message',
             CONNECTION_ERROR: 'connection-error',
@@ -12,7 +12,7 @@ class AuthenticatedConnection extends Nimiq.Observable {
             CONNECTION_CLOSED: 'connection-closed'
         };
     }
-    get MESSAGE_TYPES() {
+    static get MESSAGE_TYPES() {
         return {
             AUTHENTICATION_SERVER_CLIENT_CHALLENGE: 'authentication-server-client-challenge',
             AUTHENTICATION_CLIENT_SERVER_RESPONSE: 'authentication-client-server-response',
