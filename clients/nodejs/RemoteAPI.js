@@ -165,16 +165,9 @@ class RemoteAPI {
 
     _broadcast(type, data) {
         if (!this._listeners[type]) return;
-        let message = {
-            type: type
-        };
-        if (data !== undefined) {
-            message.data = data;
-        }
-        message = JSON.stringify(message);
         for (let connection of this._listeners[type]) {
             if (connection.connected) {
-                connection.send(message);
+                connection.send(type, data);
             }
         }
     }
