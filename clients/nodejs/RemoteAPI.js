@@ -80,7 +80,6 @@ class RemoteAPI {
 
     _onConnection(connection) {
         // handle websocket connection
-        this._getSnapShot().then(snapshot => connection.send(RemoteAPI.MESSAGE_TYPES.SNAPSHOT, snapshot));
 
         connection.on('message', message => this._onMessage(connection, message));
         connection.on('close', () => this._unregisterListeners(connection));
