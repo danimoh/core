@@ -12,8 +12,7 @@ class RemoteAPI {
             ACCOUNTS_GET_BALANCE: 'accounts-get-balance',
             ACCOUNTS_GET_HASH: 'accounts-get-hash',
             BLOCKCHAIN_GET_BLOCK: 'get-block',
-            BLOCKCHAIN_GET_NEXT_COMPACT_TARGET: 'blockchain-get-next-compact-target',
-            MEMPOOL_GET_TRANSACTIONS: 'mempool-get-transactions'
+            BLOCKCHAIN_GET_NEXT_COMPACT_TARGET: 'blockchain-get-next-compact-target'
         };
     }
     static get MESSAGE_TYPES() {
@@ -40,7 +39,6 @@ class RemoteAPI {
             MEMPOOL_STATE: 'mempool',
             MEMPOOL_TRANSACTION_ADDED: 'mempool-transaction-added',
             MEMPOOL_TRANSACTIONS_READY: 'mempool-transactions-ready',
-            MEMPOOL_TRANSACTIONS: 'mempool-transactions',
             MINER_STATE: 'miner',
             MINER_STARTED: 'miner-started',
             MINER_STOPPED: 'miner-stopped',
@@ -104,8 +102,6 @@ class RemoteAPI {
             this._sendBlock(connection, message.hash);
         } else if (message.command === RemoteAPI.COMMANDS.BLOCKCHAIN_GET_NEXT_COMPACT_TARGET) {
             this._sendNextCompactTarget(connection);
-        } else if (message.command === RemoteAPI.COMMANDS.MEMPOOL_GET_TRANSACTIONS) {
-            this._sendMempoolTransactions(connection);
         } else {
             connection.sendError('Unsupported command.', message.command);
         }
@@ -251,10 +247,6 @@ class RemoteAPI {
         this.$.blockchain.getNextCompactTarget()
             .then(nextCompactTarget => connection.send(RemoteAPI.MESSAGE_TYPES.BLOCKCHAIN_NEXT_COMPACT_TARGET, nextCompactTarget))
             .catch(e => connection.sendError('Failed to get next compact target.', RemoteAPI.COMMANDS.BLOCKCHAIN_GET_NEXT_COMPACT_TARGET));
-    }
-
-    _sendMempoolTransactions(connection) {
-        connection.send(RemoteAPI.MESSAGE_TYPES.MEMPOOL_TRANSACTIONS, this.$.mempool.getTransactions().map(this._serializeToBase64));
     }
 
     _sendState(connection, type) {
