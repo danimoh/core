@@ -130,6 +130,7 @@ class AuthenticatedConnection extends Nimiq.Observable {
 
 
     async _handleAuthenticationClientServerResponse(data) {
+        console.log('\n\nhandle auth client server response');
         if (!data || typeof(data.hash)!=='string' || typeof(data.challenge)!=='string') {
             this.sendError('Authentication failed: Illegal response.');
             this._closeConnection();
