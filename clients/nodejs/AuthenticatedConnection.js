@@ -109,6 +109,7 @@ class AuthenticatedConnection extends Nimiq.Observable {
             }
             return;
         }
+        console.log('\n\nmessage', message);
         if (this.authenticated) {
             this.fire(AuthenticatedConnection.EVENTS.MESSAGE, message);
         } else {
