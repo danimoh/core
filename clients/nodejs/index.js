@@ -77,7 +77,7 @@ try {
 
         if (remotePort) {
             if (!remoteAuth) {
-                console.error('Authentification secret required for remote API.');
+                console.error('Authentication secret required for remote API.');
                 process.exit();
             }
             new RemoteApi($, remotePort, key, cert, remoteAuth);
