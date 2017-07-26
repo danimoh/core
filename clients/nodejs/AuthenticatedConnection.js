@@ -153,6 +153,8 @@ class AuthenticatedConnection extends Nimiq.Observable {
         this.fire(AuthenticatedConnection.EVENTS.CONNECTION_ESTABLISHED);
         // answer the client challenge to also authenticate us to the client
         const serverClientHash = await Nimiq.Hash.hard(Nimiq.BufferUtils.fromAscii(this._authChallenge + clientChallenge + this._authSecret));
+        console.log('\n\ncomputed hash of', this._authChallenge, clientChallenge, this._authSecret);
+        console.log('got', serverClientHash.toBase64());
         this.send(AuthenticatedConnection.MESSAGE_TYPES.AUTHENTICATION_SERVER_CLIENT_RESPONSE, serverClientHash.toBase64());
     }
 }
