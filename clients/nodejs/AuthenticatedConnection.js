@@ -30,6 +30,7 @@ class AuthenticatedConnection extends Nimiq.Observable {
         this._ws.on('message', message => this._onMessage(message));
         this._ws.on('message', message => console.log('\n\ngot mail:', message));
         this._ws.addEventListener('message', message => console.log('event listener', message));
+        console.log('\n\nbound event listeners..');
         this._ws.on('close', () => this.fire(AuthenticatedConnection.EVENTS.CONNECTION_CLOSED));
         this._ws.on('error', e => this.fire(AuthenticatedConnection.EVENTS.CONNECTION_ERROR, e));
         if (this._ws.readyState === WebSocket.OPEN) {
