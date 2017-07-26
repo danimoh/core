@@ -11,10 +11,9 @@ class AuthenticatingWebSocketServer extends Nimiq.Observable {
             NEW_CONNECTION: 'new-connection'
         };
     }
-    constructor(port, sslKeyFile, sslCertFile, passwordFile) {
+    constructor(port, sslKeyFile, sslCertFile, authSecretFile) {
         super();
-        //const authSecret = fs.readFileSync(passwordFile);
-        const authSecret = 'fancypw';
+        const authSecret = fs.readFileSync(authSecretFile);
 
         const sslOptions = {
             key: fs.readFileSync(sslKeyFile),

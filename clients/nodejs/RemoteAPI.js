@@ -52,9 +52,9 @@ class RemoteAPI {
         };
     }
 
-    constructor($, port, sslKeyFile, sslCertFile) {
+    constructor($, port, sslKeyFile, sslCertFile, authSecretFile) {
         this.$ = $;
-        const webSocketServer = new AuthenticatingWebSocketServer(port, sslKeyFile, sslCertFile, null);
+        const webSocketServer = new AuthenticatingWebSocketServer(port, sslKeyFile, sslCertFile, authSecretFile);
         webSocketServer.on(AuthenticatingWebSocketServer.EVENTS.NEW_CONNECTION, connection => this._onConnection(connection));
         console.log('Remote API listening on port', port);
 
