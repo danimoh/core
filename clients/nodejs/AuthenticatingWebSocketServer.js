@@ -14,7 +14,6 @@ class AuthenticatingWebSocketServer extends Nimiq.Observable {
     constructor(port, sslKeyFile, sslCertFile, authSecretFile) {
         super();
         const authSecret = fs.readFileSync(authSecretFile, 'utf8').trim();
-        console.log('auth secret is', authSecret);
 
         const sslOptions = {
             key: fs.readFileSync(sslKeyFile),
