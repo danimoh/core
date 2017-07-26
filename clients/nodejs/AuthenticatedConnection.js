@@ -28,9 +28,6 @@ class AuthenticatedConnection extends Nimiq.Observable {
         this._authSecret = authSecret;
         this._authenticated = false;
         this._ws.on('message', message => this._onMessage(message));
-        this._ws.on('message', message => console.log('\n\ngot mail:', message));
-        this._ws.addEventListener('message', message => console.log('event listener', message));
-        console.log('\n\nbound event listeners..');
         this._ws.on('close', () => this.fire(AuthenticatedConnection.EVENTS.CONNECTION_CLOSED));
         this._ws.on('error', e => this.fire(AuthenticatedConnection.EVENTS.CONNECTION_ERROR, e));
         if (this._ws.readyState === WebSocket.OPEN) {
@@ -102,7 +99,6 @@ class AuthenticatedConnection extends Nimiq.Observable {
 
 
     _onMessage(message) {
-        console.log('\n\nmessage', message);
         try {
             message = JSON.parse(message);
         } catch(e) {
@@ -118,7 +114,7 @@ class AuthenticatedConnection extends Nimiq.Observable {
         } else {
             // handle authentification
             if (message.type === AuthenticatedConnection.MESSAGE_TYPES.AUTHENTICATION_CLIENT_SERVER_RESPONSE) {
-                this._handleAuthenticationClientServerResponse(message.data);
+                this._handleAuthenticationClientServerResponse(message);
             } else {
                 this.sendError('Not authenticated.');
                 this._closeConnection();
@@ -133,17 +129,16 @@ class AuthenticatedConnection extends Nimiq.Observable {
     }
 
 
-    async _handleAuthenticationClientServerResponse(data) {
-        console.log('\n\nhandle auth client server response');
-        if (!data || typeof(data.hash)!=='string' || typeof(data.challenge)!=='string') {
+    async _handleAuthenticationClientServerResponse(message) {
+        if (!message || typeof(message.hash)!=='string' || typeof(message.challenge)!=='string') {
             this.sendError('Authentication failed: Illegal response.');
             this._closeConnection();
             return;
         }
-        const clientChallenge = data.challenge;
+        const clientChallenge = message.challenge;
         // check the hash
         const clientServerHash = await Nimiq.Hash.hard(Nimiq.BufferUtils.fromAscii(clientChallenge + this._authChallenge + this._authSecret));
-        if (clientServerHash.toBase64() === data.hash) {
+        if (clientServerHash.toBase64() === message.hash) {
             this._onAuthenticationSucces();
         } else {
             this.sendError('Authentication failed: invalid hash');
