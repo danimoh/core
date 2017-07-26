@@ -139,7 +139,7 @@ class AuthenticatedConnection extends Nimiq.Observable {
         // check the hash
         const clientServerHash = await Nimiq.Hash.hard(Nimiq.BufferUtils.fromAscii(clientChallenge + this._authChallenge + this._authSecret));
         if (clientServerHash.toBase64() === message.hash) {
-            this._onAuthenticationSucces();
+            this._onAuthenticationSucces(clientChallenge);
         } else {
             this.sendError('Authentication failed: invalid hash');
             this._closeConnection();
