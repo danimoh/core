@@ -5,7 +5,7 @@ class HashMessageAuthenticationCode {
         if (typeof(message) !== 'string' || Nimiq.StringUtils.isMultibyte(message)) {
             throw Error('Illegal message.');
         }
-        const secretBuffer = HashMessageAuthenticationCode._hmacSecretToBuffer(secret);
+        const secretBuffer = await HashMessageAuthenticationCode._hmacSecretToBuffer(secret);
         const messageBuffer = Nimiq.BufferUtils.fromAscii(message);
         const outerPadded = HashMessageAuthenticationCode._xorPad(secretBuffer, HashMessageAuthenticationCode.OUTER_PAD);
         const innerPadded = HashMessageAuthenticationCode._xorPad(secretBuffer, HashMessageAuthenticationCode.INNER_PAD);
@@ -47,7 +47,6 @@ class HashMessageAuthenticationCode {
 
     static _xorPad(buffer, pad) {
         const hashSize = Nimiq.Crypto.hashSize;
-        console.log('buffer', typeof(buffer), buffer.byteLength, hashSize, buffer);
         if (!(buffer instanceof Uint8Array) || buffer.byteLength!==hashSize) {
             throw Error('Invalid buffer');
         }
