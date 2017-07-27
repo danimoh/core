@@ -1,6 +1,6 @@
 if (typeof(require) !== 'undefined') {
     // we are in Node
-    var Nimiq = require('../../dist/node.js');
+    Nimiq = require('../../dist/node.js');
 }
 
 class HashMessageAuthenticationCode {
