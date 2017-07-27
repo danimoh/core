@@ -1,5 +1,5 @@
 const Nimiq = require('../../dist/node.js');
-const RemoteApi = require('./RemoteAPI.js');
+const RemoteAPI = require('./RemoteAPI.js');
 
 /**
  * Base Class for the components of the Remote API.
