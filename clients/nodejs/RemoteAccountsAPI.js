@@ -1,5 +1,6 @@
 const Nimiq = require('../../dist/node.js');
 const RemoteApiComponent = require('./RemoteApiComponent.js');
+const RemoteApi = require('./RemoteAPI.js');
 
 class RemoteAccountsAPI extends RemoteApiComponent {
     constructor($) {
