@@ -26,7 +26,7 @@ class RemoteAPI {
         this._networkAPI = new RemoteNetworkAPI($);
         this._walletAPI = new RemoteWalletAPI($);
         const webSocketServer = new AuthenticatingWebSocketServer(port, sslKeyFile, sslCertFile, authSecretFile);
-        webSocketServer.on(AuthenticatingWebSocketServer.EVENTS.NEW_CONNECTION, connection => this._onConnection(connection));
+        webSocketServer.on(AuthenticatingWebSocketServer.Events.NEW_CONNECTION, connection => this._onConnection(connection));
         console.log('Remote API listening on port', port);
     }
 
