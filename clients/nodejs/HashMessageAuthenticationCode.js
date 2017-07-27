@@ -47,6 +47,7 @@ class HashMessageAuthenticationCode {
 
     static _xorPad(buffer, pad) {
         const hashSize = Nimiq.Crypto.hashSize;
+        console.log('buffer', typeof(buffer), buffer.byteLength, hashSize, buffer);
         if (!(buffer instanceof Uint8Array) || buffer.byteLength!==hashSize) {
             throw Error('Invalid buffer');
         }
