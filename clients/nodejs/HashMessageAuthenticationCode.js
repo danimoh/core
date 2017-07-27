@@ -2,7 +2,7 @@ const Nimiq = require('../../dist/node.js');
 
 class HashMessageAuthenticationCode {
     static async hmac(secret, message) {
-        if (typeof(message) !== 'string' || Nimiq.StringUtils.isMultiByte(message)) {
+        if (typeof(message) !== 'string' || Nimiq.StringUtils.isMultibyte(message)) {
             throw Error('Illegal message.');
         }
         const secretBuffer = HashMessageAuthenticationCode._hmacSecretToBuffer(secret);
@@ -36,7 +36,7 @@ class HashMessageAuthenticationCode {
                 return resultBuffer;
             }
         } else if (typeof(secret) === 'string') {
-            if (Nimiq.StringUtils.isMultiByte(secret)) {
+            if (Nimiq.StringUtils.isMultibyte(secret)) {
                 throw Error('Multi byte passwords not supported');
             }
             return await HashMessageAuthenticationCode._hmacSecretToBuffer(Nimiq.BufferUtils.fromAscii(data));
