@@ -1,6 +1,6 @@
 const Nimiq = require('../../dist/node.js');
 const WebSocket = require('ws'); // https://github.com/websockets/ws
-const HashMessageAuthenticationCode = require('./HashMessageAuthenticationCode.js');
+require('./HashMessageAuthenticationCode.js'); // gets bound to the Nimiq object
 
 
 class AuthenticatedConnection extends Nimiq.Observable {
