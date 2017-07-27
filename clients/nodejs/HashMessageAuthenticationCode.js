@@ -1,4 +1,4 @@
-let Nimiq = typeof(Nimiq)!=='undefined'? Nimiq : require('../../dist/node.js');
+var Nimiq = typeof(Nimiq)!=='undefined'? Nimiq : require('../../dist/node.js');
 
 class HashMessageAuthenticationCode {
     static async hmac(secret, message) {
