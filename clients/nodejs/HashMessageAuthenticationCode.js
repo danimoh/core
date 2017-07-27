@@ -62,4 +62,4 @@ class HashMessageAuthenticationCode {
 }
 HashMessageAuthenticationCode.OUTER_PAD = 0x5C;
 HashMessageAuthenticationCode.INNER_PAD = 0x36;
-Nimiq.Class.register(HashMessageAuthenticationCode);
+//Nimiq.Class.register(HashMessageAuthenticationCode);
