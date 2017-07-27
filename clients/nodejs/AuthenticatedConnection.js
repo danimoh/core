@@ -17,7 +17,8 @@ class AuthenticatedConnection extends Nimiq.Observable {
             AUTHENTICATION_SERVER_CLIENT_CHALLENGE: 'authentication-server-client-challenge',
             AUTHENTICATION_CLIENT_SERVER_RESPONSE: 'authentication-client-server-response',
             AUTHENTICATION_SERVER_CLIENT_RESPONSE: 'authentication-server-client-response',
-            ERROR: 'error'
+            ERROR: 'error',
+            INFO: 'info'
         };
     }
 
@@ -60,6 +61,11 @@ class AuthenticatedConnection extends Nimiq.Observable {
             }
             this._ws.send(JSON.stringify(message));
         }
+    }
+
+
+    sendInfo(info) {
+        this.send(AuthenticatedConnection.MESSAGE_TYPES.INFO, info);
     }
 
 

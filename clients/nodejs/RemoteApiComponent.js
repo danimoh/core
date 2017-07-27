@@ -47,7 +47,7 @@ class RemoteApiComponent {
             this._listeners[type] = new Set();
         }
         this._listeners[type].add(connection);
-        connection.send(RemoteAPI.MessageTypes.INFO, 'Listener for type '+type+' registered.');
+        connection.sendInfo('Listener for type '+type+' registered.');
         return true;
     }
 
@@ -66,7 +66,7 @@ class RemoteApiComponent {
         if (type in this._listeners) {
             this._listeners[type].delete(connection);
         }
-        connection.send(RemoteAPI.MessageTypes.INFO, 'Listener for type '+type+' unregistered.');
+        connection.sendInfo('Listener for type '+type+' unregistered.');
         return true;
     }
 

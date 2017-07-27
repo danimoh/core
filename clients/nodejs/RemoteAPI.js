@@ -132,8 +132,7 @@ RemoteAPI.Commands = {
 };
 RemoteAPI.MessageTypes = {
     SNAPSHOT: 'snapshot',
-    ERROR: 'error',
-    INFO: 'info'
+    ERROR: 'error'
 };
 
 module.exports = RemoteAPI;
