@@ -32,7 +32,7 @@ class HashMessageAuthenticationCode {
                 // pad fill up the buffer to hash size
                 let resultBuffer = new Nimiq.SerialBuffer(hashSize);
                 resultBuffer.write(secret);
-                resultBuffer.write(new Uint8Buffer(hashSize - secret.byteLength)); // fil up with zeros
+                resultBuffer.write(new Uint8Array(hashSize - secret.byteLength)); // fil up with zeros
                 return resultBuffer;
             }
         } else if (typeof(secret) === 'string') {
