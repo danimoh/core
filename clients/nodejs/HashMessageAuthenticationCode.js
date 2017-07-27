@@ -1,3 +1,4 @@
+console.log(typeof(Nimiq));
 const Nimiq = typeof(Nimiq)!=='undefined'? Nimiq : require('../../dist/node.js');
 
 class HashMessageAuthenticationCode {
