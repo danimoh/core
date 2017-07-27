@@ -3,7 +3,7 @@ const RemoteApiComponent = require('./RemoteApiComponent.js');
 class RemoteNetworkAPI extends RemoteApiComponent {
     constructor($) {
         super($);
-        $.network.on('peers-changed', () => this._broadcast(RemoteNetworkAPI.MessageTypes.NETWORK_PEERS_CHANGED, this._getNetworkState()));
+        $.network.on('peers-changed', () => this._broadcast(RemoteNetworkAPI.MessageTypes.NETWORK_PEERS_CHANGED, this.getState()));
         $.network.on('peer-joined', () => this._broadcast(RemoteNetworkAPI.MessageTypes.NETWORK_PEER_JOINED));
         $.network.on('peer-left', () => this._broadcast(RemoteNetworkAPI.MessageTypes.NETWORK_PEER_LEFT));
     }
