@@ -32,8 +32,7 @@ class RemoteAccountsAPI extends RemoteApiComponent {
         if (message.type === RemoteAccountsAPI.MessageTypes.ACCOUNTS_ACCOUNT_CHANGED) {
             const address = this._parseAddress(message.address);
             if (!address) {
-                connection.sendError('Type ' + RemoteAccountsAPI.MessageTypes.ACCOUNTS_ACCOUNT_CHANGED
-                    + ' requires a valid address in hex format', RemoteAPI.Commands.REGISTER_LISTENER);
+                connection.sendError('Type ' + RemoteAccountsAPI.MessageTypes.ACCOUNTS_ACCOUNT_CHANGED + ' requires a valid address in hex format');
                 return true;
             }
             message.type = message.type + '-' + message.address.toLowerCase();
@@ -47,8 +46,7 @@ class RemoteAccountsAPI extends RemoteApiComponent {
         if (message.type === RemoteAccountsAPI.MessageTypes.ACCOUNTS_ACCOUNT_CHANGED) {
             const address = this._parseAddress(message.address);
             if (!address) {
-                connection.sendError('Type ' + RemoteAccountsAPI.MessageTypes.ACCOUNTS_ACCOUNT_CHANGED
-                    + ' requires a valid address in hex format', RemoteAPI.Commands.UNREGISTER_LISTENER);
+                connection.sendError('Type ' + RemoteAccountsAPI.MessageTypes.ACCOUNTS_ACCOUNT_CHANGED + ' requires a valid address in hex format');
                 return true;
             }
             message.type = message.type + '-' + message.address.toLowerCase();

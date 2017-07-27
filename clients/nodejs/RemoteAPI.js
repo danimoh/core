@@ -66,7 +66,7 @@ class RemoteAPI {
         || this._minerAPI.registerListener(connection, message)
         || this._networkAPI.registerListener(connection, message)
         || this._walletAPI.registerListener(connection, message)
-        || connection.sendError(type + ' is not a valid type.', RemoteAPI.Commands.REGISTER_LISTENER);
+        || connection.sendError(message.type + ' is not a valid type.', RemoteAPI.Commands.REGISTER_LISTENER);
     }
 
     _unregisterListener(connection, message) {
@@ -77,7 +77,7 @@ class RemoteAPI {
         || this._minerAPI.unregisterListener(connection, message)
         || this._networkAPI.unregisterListener(connection, message)
         || this._walletAPI.unregisterListener(connection, message)
-        || connection.sendError(type + ' is not a valid type.', RemoteAPI.Commands.UNREGISTER_LISTENER);
+        || connection.sendError(message.type + ' is not a valid type.', RemoteAPI.Commands.UNREGISTER_LISTENER);
     }
 
     _unregisterListeners(connection) {
