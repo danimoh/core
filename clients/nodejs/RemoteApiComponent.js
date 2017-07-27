@@ -1,3 +1,5 @@
+const Nimiq = require('../../dist/node.js');
+
 /**
  * Base Class for the components of the Remote API.
  */
