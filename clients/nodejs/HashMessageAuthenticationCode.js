@@ -9,11 +9,11 @@ class HashMessageAuthenticationCode {
         const messageBuffer = Nimiq.BufferUtils.fromAscii(message);
         const outerPadded = HashMessageAuthenticationCode._xorPad(secretBuffer, HashMessageAuthenticationCode.OUTER_PAD);
         const innerPadded = HashMessageAuthenticationCode._xorPad(secretBuffer, HashMessageAuthenticationCode.INNER_PAD);
-        const innerConcatenation = new SerialBuffer(innerPadded.byteLength + messageBuffer.byteLength);
+        const innerConcatenation = new Nimiq.SerialBuffer(innerPadded.byteLength + messageBuffer.byteLength);
         innerConcatenation.write(innerPadded);
         innerConcatenation.write(messageBuffer);
         const innerHash = (await Nimiq.Hash.light(innerConcatenation)).serialize();
-        const outerConcatenation = new SerialBuffer(outerPadded.byteLength + innerHash.byteLength);
+        const outerConcatenation = new Nimiq.SerialBuffer(outerPadded.byteLength + innerHash.byteLength);
         outerConcatenation.write(outerPadded);
         outerConcatenation.write(innerHash);
         return await Nimiq.Hash.light(outerConcatenation);
@@ -53,7 +53,7 @@ class HashMessageAuthenticationCode {
         if (!Nimiq.NumberUtils.isUint8(pad)) {
             throw Error('Pad must be an Uint8');
         }
-        let resultBuffer = new SerialBuffer(hashSize);
+        let resultBuffer = new Nimiq.SerialBuffer(hashSize);
         buffer.forEach(entry => {
             resultBuffer.writeUint8(entry ^ pad);
         });
