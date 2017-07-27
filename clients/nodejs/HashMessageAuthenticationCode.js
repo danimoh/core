@@ -39,7 +39,7 @@ class HashMessageAuthenticationCode {
             if (Nimiq.StringUtils.isMultibyte(secret)) {
                 throw Error('Multi byte passwords not supported');
             }
-            return await HashMessageAuthenticationCode._hmacSecretToBuffer(Nimiq.BufferUtils.fromAscii(data));
+            return await HashMessageAuthenticationCode._hmacSecretToBuffer(Nimiq.BufferUtils.fromAscii(secret));
         } else {
             throw Error('Unsupported secret format');
         }
