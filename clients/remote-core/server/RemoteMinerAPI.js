@@ -39,7 +39,6 @@ class RemoteMinerAPI extends RemoteApiComponent {
     _isValidListenerType(type) {
         const VALID_LISTENER_TYPES = [RemoteMinerAPI.MessageTypes.MINER_STARTED, RemoteMinerAPI.MessageTypes.MINER_STOPPED,
             RemoteMinerAPI.MessageTypes.MINER_HASHRATE_CHANGED, RemoteMinerAPI.MessageTypes.MINER_BLOCK_MINED];
-        console.log('is valid listener type called', type, RemoteMinerAPI.MessageTypes.MINER_STARTED, VALID_LISTENER_TYPES.indexOf(type));
         return VALID_LISTENER_TYPES.indexOf(type) !== -1;
     }
 

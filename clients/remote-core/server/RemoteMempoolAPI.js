@@ -22,7 +22,7 @@ class RemoteMempoolAPI extends RemoteApiComponent {
     /** @overwrite */
     handleMessage(connection, message) {
         if (message.command === RemoteMempoolAPI.Commands.MEMPOOL_PUSH_TRANSACTION) {
-            this._pushTransaction(message.transaction);
+            this._pushTransaction(connection, message.transaction);
             return true;
         } else {
             return false;
