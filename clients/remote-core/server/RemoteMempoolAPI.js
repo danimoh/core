@@ -9,7 +9,7 @@ class RemoteMempoolAPI extends RemoteApiComponent {
     constructor($) {
         super($);
         $.mempool.on('transaction-added', transaction => this._broadcast(RemoteMempoolAPI.MessageTypes.MEMPOOL_TRANSACTION_ADDED, this._serializeToBase64(transaction)));
-        $.mempool.on('transactions-ready', () => this._broadcast(RemoteMempoolAPI.MessageTypes.MEMPOOL_TRANSACTIONS_READY), this.getState()); // send the full current
+        $.mempool.on('transactions-ready', () => this._broadcast(RemoteMempoolAPI.MessageTypes.MEMPOOL_TRANSACTIONS_READY, this.getState())); // send the full current
         // state so that the client can know which transactions have been evicted
     }
 
