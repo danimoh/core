@@ -42,10 +42,8 @@ class RemoteMempoolAPI extends RemoteApiComponent {
      */
     _parseTransaction(transactionBase64) {
         try {
-            console.log('parsing transaction', transactionBase64);
-            return Nimiq.Transaction.unserialize(Nimiq.BufferUtils.fromBase64(serializedTransaction));
+            return Nimiq.Transaction.unserialize(Nimiq.BufferUtils.fromBase64(transactionBase64));
         } catch(e) {
-            console.log(e);
             return null;
         }
     }
